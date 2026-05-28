@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Test Vocacional Enseñanza Media</title>
 
   <link rel="stylesheet" href="style.css" />
@@ -14,42 +15,42 @@
 
     <header>
       <h1>Test Vocacional Enseñanza Media</h1>
-      <p>
-        Orientación entre modalidad Científico Humanista y Técnico Profesional
-      </p>
+      <p>Descubre tu tendencia entre Científico Humanista y Técnico Profesional</p>
     </header>
+
+    <section class="avance-card">
+      <div class="avance-texto">
+        <span>Avance del test</span>
+        <strong id="textoAvance">0 de 30 respondidas</strong>
+      </div>
+
+      <div class="barra-avance">
+        <div id="progresoAvance"></div>
+      </div>
+    </section>
 
     <form id="formTest">
 
-      <!-- DATOS ESTUDIANTE -->
-
       <section class="card">
-
         <h2>Datos del estudiante</h2>
 
         <label>Nombre completo</label>
-        <input
-          type="text"
-          id="nombre"
-          required
-        >
+        <input type="text" id="nombre" required>
 
         <label>RUT</label>
         <input
           type="text"
           id="rut"
           required
-          placeholder="Ej: 12.345.678-9"
+          placeholder="Ej: 12345678-9"
+          autocomplete="off"
         >
 
+        <p id="mensajeRut" class="mensaje-error"></p>
+
         <label>Establecimiento</label>
-
         <select id="establecimiento" required>
-
-          <option value="">
-            Seleccione establecimiento
-          </option>
-
+          <option value="">Seleccione establecimiento</option>
           <option>LICEO MARTA DONOSO ESPEJO</option>
           <option>LICEO CARLOS CONDELL</option>
           <option>ESCUELA HERMANO GUIDO GOOSSENS</option>
@@ -86,54 +87,34 @@
           <option>ESCUELA CARLOS TRUPP WANNER</option>
           <option>LICEO COMPLEJO EDUCACIONAL JAVIERA CARRERA</option>
           <option>LICEO BICENTENARIO ORIENTE DE TALCA</option>
-
         </select>
-
       </section>
 
-      <!-- AREA CH -->
-
-      <section class="card">
-
+      <section class="card area-ch">
         <h2>Área Científico Humanista</h2>
-
+        <p class="descripcion-area">
+          Preguntas relacionadas con estudios superiores, análisis, investigación y formación académica.
+        </p>
         <div id="preguntasCH"></div>
-
       </section>
 
-      <!-- AREA TP -->
-
-      <section class="card">
-
+      <section class="card area-tp">
         <h2>Área Técnico Profesional</h2>
-
+        <p class="descripcion-area">
+          Preguntas relacionadas con especialidades, práctica, habilidades técnicas y preparación laboral.
+        </p>
         <div id="preguntasTP"></div>
-
       </section>
 
-      <!-- BOTON -->
-
-      <button type="submit">
-        Ver resultado
-      </button>
+      <button type="submit">Ver resultado</button>
 
     </form>
 
-    <!-- RESULTADO -->
-
-    <section
-      id="resultado"
-      class="resultado oculto"
-    ></section>
+    <section id="resultado" class="resultado oculto"></section>
 
   </div>
 
-  <!-- SUPABASE -->
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- SCRIPT -->
-
   <script src="script.js"></script>
 
 </body>

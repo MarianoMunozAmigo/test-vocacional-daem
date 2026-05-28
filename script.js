@@ -1,37 +1,43 @@
+const SUPABASE_URL = "https://jxsgfytqlrhsodaoaogk.supabase.co";
+
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4c2dmeXRxbHJoc29kYW9hb2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NTM4MTQsImV4cCI6MjA5NTUyOTgxNH0.TuTdhInCKECsj0gHyUo1a2HEzwJK0OCJrlX5_EBlOP0";
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const preguntasCH = [
-  "¿Te interesa continuar estudios superiores en una universidad?",
-  "¿Te gusta leer, investigar y analizar información?",
-  "¿Te interesa prepararte para rendir pruebas de admisión a la educación superior?",
-  "¿Te acomoda estudiar asignaturas como Lenguaje, Matemática, Historia o Ciencias?",
-  "¿Te gustaría profundizar conocimientos teóricos antes de elegir una carrera?",
-  "¿Te interesa desarrollar habilidades de análisis, argumentación y pensamiento crítico?",
-  "¿Te ves estudiando una carrera profesional en el futuro?",
-  "¿Te gusta resolver problemas desde la reflexión y el estudio?",
-  "¿Te interesa participar en debates, exposiciones o trabajos de investigación?",
-  "¿Te gustaría tener una formación amplia antes de decidir tu especialidad?",
-  "¿Te interesa prepararte para carreras del área de salud, educación, derecho, ingeniería u otras similares?",
-  "¿Te sientes cómodo estudiando contenidos académicos durante varios años?",
-  "¿Te gustaría ingresar a una universidad, instituto profesional o centro de formación técnica después de egresar?",
-  "¿Te interesa desarrollar habilidades de comprensión lectora, escritura y análisis?",
-  "¿Crees que una formación Científico Humanista se ajusta a tus intereses?"
+  "¿Disfrutas leer libros y analizar textos en profundidad?",
+  "¿Te interesa aprender sobre el funcionamiento del universo y la naturaleza?",
+  "¿Te gusta reflexionar sobre problemas éticos o sociales?",
+  "¿Prefieres materias teóricas como matematicas, historia o biología?",
+  "¿Te interesa el estudio de idiomas o aprender otras culturas?",
+  "¿Disfrutas debatir ideas y compartir tus opiniones en clases?",
+  "¿Te sientes motivado por las ciencias exactas como física o química?",
+  "¿Te gusta investigar y buscar soluciones a preguntas complejas?",
+  "¿Te interesa comprender cómo funciona la mente humana?",
+  "¿Disfrutas estudiar temas relacionados con filosofía y literatura?",
+  "¿Prefieres un enfoque más académico en tu educación?",
+  "¿Te gustaría contribuir al desarrollo científico de la sociedad?",
+  "¿Disfrutas escribir ensayos o realizar análisis críticos?",
+  "¿Te sientes cómodo estudiando temas abstractos o conceptuales?",
+  "¿Consideras importante profundizar en el conocimiento general?"
 ];
 
 const preguntasTP = [
-  "¿Te interesa aprender una especialidad técnica durante la enseñanza media?",
-  "¿Te gustaría egresar con un título técnico de nivel medio?",
-  "¿Te interesa realizar actividades prácticas y aprender haciendo?",
-  "¿Te gustaría prepararte para ingresar al mundo laboral al egresar del liceo?",
-  "¿Te interesan áreas como administración, electricidad, mecánica, gastronomía, salud, informática u otras especialidades?",
-  "¿Te acomoda trabajar en talleres, laboratorios o espacios prácticos?",
-  "¿Te gustaría realizar una práctica profesional antes de terminar tu formación?",
-  "¿Te interesa aprender habilidades útiles para trabajar o emprender?",
-  "¿Te gustaría combinar estudios generales con formación técnica?",
-  "¿Te ves trabajando en un área técnica en el futuro?",
-  "¿Te interesa adquirir herramientas concretas para desempeñarte en un oficio o especialidad?",
-  "¿Te gustaría continuar estudiando después, pero con una base técnica previa?",
-  "¿Te motiva aprender usando herramientas, equipos, software o maquinaria?",
-  "¿Crees que una formación Técnico Profesional puede ayudarte a cumplir tus metas?",
-  "¿Te interesa una educación más vinculada al trabajo y la práctica?"
+  "¿Te gustaría aprender sobre procesos técnicos y prácticos en el trabajo?",
+  "¿Te interesa desarrollar habilidades que puedas aplicar directamente en una profesión?",
+  "¿Prefieres materias que combinen teoría con actividades prácticas?",
+  "¿Te gustaría trabajar con máquinas, herramientas o tecnología específica?",
+  "¿Consideras importante aprender algo que tenga una salida laboral inmediata?",
+  "¿Te interesa el funcionamiento interno de sistemas como motores, redes o computadoras?",
+  "¿Prefieres actividades donde puedas trabajar con tus manos o construir cosas?",
+  "¿Te interesan los negocios y la administración de recursos?",
+  "¿Te gustaría aprender a gestionar proyectos o empresas?",
+  "¿Consideras útil aprender técnicas de primeros auxilios o cuidado de personas?",
+  "¿Te gustaría trabajar en áreas como gastronomía, salud o atención al cliente?",
+  "¿Te atraen las actividades que requieran organización y planificación?",
+  "¿Te sientes cómodo resolviendo problemas técnicos?",
+  "¿Disfrutas de las tareas que impliquen trabajar con tecnología avanzada?",
+  "¿Te gustaría participar en proyectos que requieran resultados concretos y medibles"
 ];
 
 function crearPreguntas(lista, contenedorId, prefijo) {
@@ -46,21 +52,24 @@ function crearPreguntas(lista, contenedorId, prefijo) {
 
     div.innerHTML = `
       <p>${numero}. ${texto}</p>
+
       <div class="opciones">
-        <label>
+
+        <label class="opcion-respuesta">
           <input type="radio" name="${nombrePregunta}" value="2" required>
-          Sí
+          <span>Sí</span>
         </label>
 
-        <label>
+        <label class="opcion-respuesta">
           <input type="radio" name="${nombrePregunta}" value="1">
-          No lo sé
+          <span>No lo sé</span>
         </label>
 
-        <label>
+        <label class="opcion-respuesta">
           <input type="radio" name="${nombrePregunta}" value="0">
-          No
+          <span>No</span>
         </label>
+
       </div>
     `;
 
@@ -68,22 +77,81 @@ function crearPreguntas(lista, contenedorId, prefijo) {
   });
 }
 
+function validarRutFormato(rut) {
+  const regex = /^[0-9]{7,8}-[0-9K]$/;
+  return regex.test(rut);
+}
+
+function actualizarAvance() {
+  const respondidas = document.querySelectorAll('input[type="radio"]:checked').length;
+  const total = 30;
+  const porcentaje = Math.round((respondidas / total) * 100);
+
+  document.getElementById("textoAvance").textContent =
+    `${respondidas} de ${total} respondidas`;
+
+  document.getElementById("progresoAvance").style.width =
+    porcentaje + "%";
+}
+
 crearPreguntas(preguntasCH, "preguntasCH", "ch");
 crearPreguntas(preguntasTP, "preguntasTP", "tp");
 
-document.getElementById("formTest").addEventListener("submit", function(event) {
+document.querySelectorAll('input[type="radio"]').forEach(radio => {
+  radio.addEventListener("change", actualizarAvance);
+});
+
+const rutInput = document.getElementById("rut");
+const mensajeRut = document.getElementById("mensajeRut");
+
+rutInput.addEventListener("blur", function () {
+  const rut = rutInput.value.trim().toUpperCase();
+
+  if (rut === "") {
+    mensajeRut.textContent = "";
+    rutInput.classList.remove("input-error");
+    return;
+  }
+
+  if (!validarRutFormato(rut)) {
+    mensajeRut.textContent =
+      "El RUT debe ingresarse sin puntos y con guion. Ejemplo: 12345678-9";
+
+    rutInput.classList.add("input-error");
+  } else {
+    mensajeRut.textContent = "";
+    rutInput.classList.remove("input-error");
+    rutInput.value = rut;
+  }
+});
+
+document.getElementById("formTest").addEventListener("submit", async function(event) {
   event.preventDefault();
 
-  const nombre = document.getElementById("nombre").value;
-  const rut = document.getElementById("rut").value;
+  const nombre = document.getElementById("nombre").value.trim();
+  const rut = rutInput.value.trim().toUpperCase();
   const establecimiento = document.getElementById("establecimiento").value;
+
+  if (!validarRutFormato(rut)) {
+    mensajeRut.textContent =
+      "El RUT debe ingresarse sin puntos y con guion. Ejemplo: 12345678-9";
+
+    rutInput.classList.add("input-error");
+    rutInput.focus();
+    return;
+  }
 
   let puntajeCH = 0;
   let puntajeTP = 0;
 
   for (let i = 1; i <= 15; i++) {
-    puntajeCH += parseInt(document.querySelector(`input[name="ch${i}"]:checked`).value);
-    puntajeTP += parseInt(document.querySelector(`input[name="tp${i}"]:checked`).value);
+    puntajeCH += parseInt(
+      document.querySelector(`input[name="ch${i}"]:checked`).value
+    );
+
+    puntajeTP += parseInt(
+      document.querySelector(`input[name="tp${i}"]:checked`).value
+    );
   }
 
   const porcentajeCH = Math.round((puntajeCH / 30) * 100);
@@ -98,6 +166,31 @@ document.getElementById("formTest").addEventListener("submit", function(event) {
   } else {
     tendencia = "Tendencia Equilibrada";
   }
+
+  const { error } = await supabaseClient
+    .from("respuestas_test_vocacional")
+    .insert({
+      nombre,
+      rut,
+      establecimiento,
+      puntaje_ch: puntajeCH,
+      puntaje_tp: puntajeTP,
+      porcentaje_ch: porcentajeCH,
+      porcentaje_tp: porcentajeTP,
+      tendencia
+    });
+
+if (error) {
+  console.error("ERROR SUPABASE:", error);
+
+  if (error.code === "23505") {
+    alert("Este RUT ya registró una respuesta. Cada estudiante puede responder solo una vez.");
+  } else {
+    alert("Error al guardar: " + error.message);
+  }
+
+  return;
+}
 
   const resultado = document.getElementById("resultado");
 
@@ -122,9 +215,21 @@ document.getElementById("formTest").addEventListener("submit", function(event) {
       </div>
     </div>
 
-    <p class="tendencia">Tendencia predominante: ${tendencia}</p>
+    <p class="tendencia">
+      Tendencia predominante: ${tendencia}
+    </p>
   `;
 
   resultado.classList.remove("oculto");
-  resultado.scrollIntoView({ behavior: "smooth" });
+
+  resultado.scrollIntoView({
+    behavior: "smooth"
+  });
+
+  document.getElementById("formTest").reset();
+
+  mensajeRut.textContent = "";
+  rutInput.classList.remove("input-error");
+
+  actualizarAvance();
 });
