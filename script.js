@@ -5,7 +5,6 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const preguntasCH = [
-
   "¿Disfrutas leer libros y analizar textos en profundidad?",
   "¿Te interesa aprender sobre el funcionamiento del universo y la naturaleza?",
   "¿Te gusta reflexionar sobre problemas éticos o sociales?",
@@ -38,7 +37,7 @@ const preguntasTP = [
   "¿Te atraen las actividades que requieran organización y planificación?",
   "¿Te sientes cómodo resolviendo problemas técnicos?",
   "¿Disfrutas de las tareas que impliquen trabajar con tecnología avanzada?",
-  "¿Te gustaría participar en proyectos que requieran resultados concretos y medibles"
+  "¿Te gustaría participar en proyectos que requieran resultados concretos y medibles?"
 ];
 
 function crearPreguntas(lista, contenedorId, prefijo) {
@@ -132,7 +131,7 @@ async function generarPDFResultado(
 
     if (logoBase64) {
       try {
-        doc.addImage(logoBase64, "PNG", 20, 12, 38, 38);
+        doc.addImage(logoBase64, "PNG", 15, 10, 36, 20);
       } catch (logoError) {
         console.error("Error agregando logo al PDF:", logoError);
       }
@@ -140,43 +139,43 @@ async function generarPDFResultado(
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
-    doc.text("Resultado Test Vocacional", 70, 25);
+    doc.text("Resultado Test Vocacional", 20, 42);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
-    doc.text("Enseñanza Media - DAEM Talca", 70, 34);
+    doc.text("Enseñanza Media - DAEM Talca", 20, 51);
 
-    doc.line(20, 55, 190, 55);
+    doc.line(20, 60, 190, 60);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.text("Datos del estudiante", 20, 72);
+    doc.text("Datos del estudiante", 20, 75);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
-    doc.text(`Nombre: ${nombre}`, 20, 84);
-    doc.text(`RUT: ${rut}`, 20, 94);
+    doc.text(`Nombre: ${nombre}`, 20, 87);
+    doc.text(`RUT: ${rut}`, 20, 97);
 
     const establecimientoLineas = doc.splitTextToSize(
       `Establecimiento: ${establecimiento}`,
       170
     );
 
-    doc.text(establecimientoLineas, 20, 104);
-    doc.text(`Fecha: ${fecha}`, 20, 120);
+    doc.text(establecimientoLineas, 20, 107);
+    doc.text(`Fecha: ${fecha}`, 20, 123);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.text("Resultados", 20, 138);
+    doc.text("Resultados", 20, 142);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
-    doc.text(`Científico Humanista: ${porcentajeCH}%`, 20, 152);
-    doc.text(`Técnico Profesional: ${porcentajeTP}%`, 20, 162);
+    doc.text(`Científico Humanista: ${porcentajeCH}%`, 20, 156);
+    doc.text(`Técnico Profesional: ${porcentajeTP}%`, 20, 166);
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
-    doc.text(`Tendencia predominante: ${tendencia}`, 20, 182);
+    doc.text(`Tendencia predominante: ${tendencia}`, 20, 186);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
@@ -185,7 +184,7 @@ async function generarPDFResultado(
       "Este resultado es referencial y tiene como finalidad apoyar el proceso de orientación vocacional del estudiante. No constituye una decisión definitiva, sino una herramienta de apoyo para conversar con la familia, el establecimiento y los equipos de orientación.";
 
     const lineas = doc.splitTextToSize(textoOrientacion, 170);
-    doc.text(lineas, 20, 202);
+    doc.text(lineas, 20, 206);
 
     doc.line(20, 268, 190, 268);
 
