@@ -93,7 +93,7 @@ function actualizarAvance() {
 
 async function obtenerLogoBase64() {
   try {
-    const response = await fetch("images/logo-daem.png");
+    const response = await fetch("/images/logo-daem.png");
 
     if (!response.ok) {
       throw new Error("No se encontró el logo en images/logo-daem.png");
