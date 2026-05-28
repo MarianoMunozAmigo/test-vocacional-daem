@@ -77,6 +77,20 @@ function crearPreguntas(lista, contenedorId, prefijo) {
 
 function validarRutFormato(rut) {
   return /^[0-9]{7,8}-[0-9K]$/.test(rut);
+  function obtenerRutaInsignia(nombre) {
+
+  return "images/insignias/" +
+
+    nombre
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/ñ/g, "n")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+
+    + ".jpg";
+}
 }
 
 function actualizarAvance() {
