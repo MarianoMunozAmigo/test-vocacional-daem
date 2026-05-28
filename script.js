@@ -40,6 +40,17 @@ const preguntasTP = [
   "¿Te gustaría participar en proyectos que requieran resultados concretos y medibles?"
 ];
 
+const liceosDisponibles = [
+  "LICEO MARTA DONOSO ESPEJO",
+  "LICEO CARLOS CONDELL",
+  "LICEO ABATE MOLINA",
+  "LICEO TECNICO-PROFESIONAL EL SAUCE",
+  "LICEO COMPLEJO EDUCACIONAL JAVIERA CARRERA",
+  "LICEO BICENTENARIO ORIENTE DE TALCA"
+];
+
+let resultadoPendiente = null;
+
 function crearPreguntas(lista, contenedorId, prefijo) {
   const contenedor = document.getElementById(contenedorId);
 
@@ -77,20 +88,6 @@ function crearPreguntas(lista, contenedorId, prefijo) {
 
 function validarRutFormato(rut) {
   return /^[0-9]{7,8}-[0-9K]$/.test(rut);
-  function obtenerRutaInsignia(nombre) {
-
-  return "images/insignias/" +
-
-    nombre
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/ñ/g, "n")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-
-    + ".jpg";
-}
 }
 
 function actualizarAvance() {
@@ -128,13 +125,59 @@ async function obtenerLogoBase64() {
   }
 }
 
+function crearListaLiceos() {
+  const contenedor = document.getElementById("listaLiceos");
+
+  contenedor.innerHTML = "";
+
+  liceosDisponibles.forEach((liceo) => {
+    const label = document.createElement("label");
+    label.className = "liceo-opcion";
+
+    label.innerHTML = `
+      <input type="checkbox" name="liceosPreferencia" value="${liceo}">
+      <span>${liceo}</span>
+    `;
+
+    contenedor.appendChild(label);
+  });
+
+  document.querySelectorAll('input[name="liceosPreferencia"]').forEach(check => {
+    check.addEventListener("change", validarSeleccionLiceos);
+  });
+}
+
+function validarSeleccionLiceos() {
+  const seleccionados = document.querySelectorAll('input[name="liceosPreferencia"]:checked');
+  const mensaje = document.getElementById("mensajeLiceos");
+
+  if (seleccionados.length > 3) {
+    this.checked = false;
+    mensaje.textContent = "Puedes seleccionar un máximo de 3 liceos.";
+  } else {
+    mensaje.textContent = "";
+  }
+
+  document.querySelectorAll(".liceo-opcion").forEach(label => {
+    const input = label.querySelector("input");
+    label.classList.toggle("seleccionado", input.checked);
+  });
+}
+
+function obtenerLiceosSeleccionados() {
+  return Array.from(
+    document.querySelectorAll('input[name="liceosPreferencia"]:checked')
+  ).map(input => input.value);
+}
+
 async function generarPDFResultado(
   nombre,
   rut,
   establecimiento,
   porcentajeCH,
   porcentajeTP,
-  tendencia
+  tendencia,
+  preferencias = []
 ) {
   try {
     const { jsPDF } = window.jspdf;
@@ -191,14 +234,26 @@ async function generarPDFResultado(
     doc.setFontSize(15);
     doc.text(`Tendencia predominante: ${tendencia}`, 20, 186);
 
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("Liceos de preferencia", 20, 204);
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
+
+    let yPreferencias = 216;
+
+    preferencias.forEach((liceo, index) => {
+      const lineasLiceo = doc.splitTextToSize(`${index + 1}. ${liceo}`, 170);
+      doc.text(lineasLiceo, 20, yPreferencias);
+      yPreferencias += lineasLiceo.length * 7;
+    });
 
     const textoOrientacion =
       "Este resultado es referencial y tiene como finalidad apoyar el proceso de orientación vocacional del estudiante. No constituye una decisión definitiva, sino una herramienta de apoyo para conversar con la familia, el establecimiento y los equipos de orientación.";
 
     const lineas = doc.splitTextToSize(textoOrientacion, 170);
-    doc.text(lineas, 20, 206);
+    doc.text(lineas, 20, 244);
 
     doc.line(20, 268, 190, 268);
 
@@ -218,8 +273,45 @@ async function generarPDFResultado(
   }
 }
 
+function mostrarResumenTemporal(datos) {
+  const resultado = document.getElementById("resultado");
+
+  resultado.innerHTML = `
+    <h2>Resultado del Test Vocacional</h2>
+
+    <p><strong>Estudiante:</strong> ${datos.nombre}</p>
+    <p><strong>RUT:</strong> ${datos.rut}</p>
+    <p><strong>Establecimiento:</strong> ${datos.establecimiento}</p>
+
+    <h3>Científico Humanista</h3>
+    <div class="barra">
+      <div class="progreso" style="width: ${datos.porcentajeCH}%;">
+        ${datos.porcentajeCH}%
+      </div>
+    </div>
+
+    <h3>Técnico Profesional</h3>
+    <div class="barra">
+      <div class="progreso" style="width: ${datos.porcentajeTP}%;">
+        ${datos.porcentajeTP}%
+      </div>
+    </div>
+
+    <p class="tendencia">
+      Tendencia predominante: ${datos.tendencia}
+    </p>
+
+    <p>
+      Ahora selecciona hasta 3 liceos de tu preferencia para guardar tu respuesta y descargar el PDF.
+    </p>
+  `;
+
+  resultado.classList.remove("oculto");
+}
+
 crearPreguntas(preguntasCH, "preguntasCH", "ch");
 crearPreguntas(preguntasTP, "preguntasTP", "tp");
+crearListaLiceos();
 
 document.querySelectorAll('input[type="radio"]').forEach(radio => {
   radio.addEventListener("change", actualizarAvance);
@@ -249,7 +341,7 @@ rutInput.addEventListener("blur", function () {
   }
 });
 
-document.getElementById("formTest").addEventListener("submit", async function(event) {
+document.getElementById("formTest").addEventListener("submit", function(event) {
   event.preventDefault();
 
   const nombre = document.getElementById("nombre").value.trim();
@@ -291,17 +383,59 @@ document.getElementById("formTest").addEventListener("submit", async function(ev
     tendencia = "Tendencia Equilibrada";
   }
 
+  resultadoPendiente = {
+    nombre,
+    rut,
+    establecimiento,
+    puntajeCH,
+    puntajeTP,
+    porcentajeCH,
+    porcentajeTP,
+    tendencia
+  };
+
+  mostrarResumenTemporal(resultadoPendiente);
+
+  document.getElementById("seleccionLiceos").classList.remove("oculto");
+
+  document.getElementById("seleccionLiceos").scrollIntoView({
+    behavior: "smooth"
+  });
+});
+
+document.getElementById("btnGuardarPreferencias").addEventListener("click", async function() {
+  const mensaje = document.getElementById("mensajeLiceos");
+  const preferencias = obtenerLiceosSeleccionados();
+
+  if (!resultadoPendiente) {
+    mensaje.textContent = "Primero debes responder el test.";
+    return;
+  }
+
+  if (preferencias.length === 0) {
+    mensaje.textContent = "Debes seleccionar al menos 1 liceo.";
+    return;
+  }
+
+  if (preferencias.length > 3) {
+    mensaje.textContent = "Puedes seleccionar un máximo de 3 liceos.";
+    return;
+  }
+
   const { error } = await supabaseClient
     .from("respuestas_test_vocacional")
     .insert({
-      nombre,
-      rut,
-      establecimiento,
-      puntaje_ch: puntajeCH,
-      puntaje_tp: puntajeTP,
-      porcentaje_ch: porcentajeCH,
-      porcentaje_tp: porcentajeTP,
-      tendencia
+      nombre: resultadoPendiente.nombre,
+      rut: resultadoPendiente.rut,
+      establecimiento: resultadoPendiente.establecimiento,
+      puntaje_ch: resultadoPendiente.puntajeCH,
+      puntaje_tp: resultadoPendiente.puntajeTP,
+      porcentaje_ch: resultadoPendiente.porcentajeCH,
+      porcentaje_tp: resultadoPendiente.porcentajeTP,
+      tendencia: resultadoPendiente.tendencia,
+      preferencia_1: preferencias[0] || null,
+      preferencia_2: preferencias[1] || null,
+      preferencia_3: preferencias[2] || null
     });
 
   if (error) {
@@ -318,65 +452,60 @@ document.getElementById("formTest").addEventListener("submit", async function(ev
 
   const resultado = document.getElementById("resultado");
 
-  resultado.innerHTML = `
-    <h2>Resultado del Test Vocacional</h2>
-
-    <p><strong>Estudiante:</strong> ${nombre}</p>
-    <p><strong>RUT:</strong> ${rut}</p>
-    <p><strong>Establecimiento:</strong> ${establecimiento}</p>
-
-    <h3>Científico Humanista</h3>
-    <div class="barra">
-      <div class="progreso" style="width: ${porcentajeCH}%;">
-        ${porcentajeCH}%
-      </div>
+  resultado.innerHTML += `
+    <div class="liceos-elegidos">
+      <h3>Liceos seleccionados</h3>
+      <ol>
+        ${preferencias.map(liceo => `<li>${liceo}</li>`).join("")}
+      </ol>
     </div>
-
-    <h3>Técnico Profesional</h3>
-    <div class="barra">
-      <div class="progreso" style="width: ${porcentajeTP}%;">
-        ${porcentajeTP}%
-      </div>
-    </div>
-
-    <p class="tendencia">
-      Tendencia predominante: ${tendencia}
-    </p>
 
     <button
       type="button"
       onclick="generarPDFResultado(
-        '${nombre.replace(/'/g, "\\'")}',
-        '${rut}',
-        '${establecimiento.replace(/'/g, "\\'")}',
-        ${porcentajeCH},
-        ${porcentajeTP},
-        '${tendencia}'
+        '${resultadoPendiente.nombre.replace(/'/g, "\\'")}',
+        '${resultadoPendiente.rut}',
+        '${resultadoPendiente.establecimiento.replace(/'/g, "\\'")}',
+        ${resultadoPendiente.porcentajeCH},
+        ${resultadoPendiente.porcentajeTP},
+        '${resultadoPendiente.tendencia}',
+        ${JSON.stringify(preferencias).replace(/"/g, "&quot;")}
       )"
     >
       Descargar resultado en PDF
     </button>
   `;
 
-  resultado.classList.remove("oculto");
+  await generarPDFResultado(
+    resultadoPendiente.nombre,
+    resultadoPendiente.rut,
+    resultadoPendiente.establecimiento,
+    resultadoPendiente.porcentajeCH,
+    resultadoPendiente.porcentajeTP,
+    resultadoPendiente.tendencia,
+    preferencias
+  );
+
+  document.getElementById("formTest").reset();
+  document.getElementById("seleccionLiceos").classList.add("oculto");
+
+  document.querySelectorAll('input[name="liceosPreferencia"]').forEach(check => {
+    check.checked = false;
+  });
+
+  document.querySelectorAll(".liceo-opcion").forEach(label => {
+    label.classList.remove("seleccionado");
+  });
+
+  mensaje.textContent = "";
+  mensajeRut.textContent = "";
+  rutInput.classList.remove("input-error");
+
+  resultadoPendiente = null;
+
+  actualizarAvance();
 
   resultado.scrollIntoView({
     behavior: "smooth"
   });
-
-  await generarPDFResultado(
-    nombre,
-    rut,
-    establecimiento,
-    porcentajeCH,
-    porcentajeTP,
-    tendencia
-  );
-
-  document.getElementById("formTest").reset();
-
-  mensajeRut.textContent = "";
-  rutInput.classList.remove("input-error");
-
-  actualizarAvance();
 });

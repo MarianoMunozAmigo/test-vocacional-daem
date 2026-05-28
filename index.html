@@ -106,9 +106,24 @@
         <div id="preguntasTP"></div>
       </section>
 
-      <button type="submit">Ver resultado</button>
+      <button type="submit">Ver resultado y elegir liceos</button>
 
     </form>
+
+    <section id="seleccionLiceos" class="card oculto">
+      <h2>Elige hasta 3 liceos de tu preferencia</h2>
+      <p class="descripcion-area">
+        Selecciona los liceos que más te interesan. Puedes elegir mínimo 1 y máximo 3 opciones.
+      </p>
+
+      <div id="listaLiceos" class="lista-liceos"></div>
+
+      <p id="mensajeLiceos" class="mensaje-error"></p>
+
+      <button type="button" id="btnGuardarPreferencias">
+        Guardar preferencias y descargar resultado
+      </button>
+    </section>
 
     <section id="resultado" class="resultado oculto"></section>
 
@@ -116,12 +131,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <img
-  id="logoDaem"
-  src="images/logo-daem.png"
-  style="display:none;"
->
-
   <script src="script.js"></script>
 
 </body>
