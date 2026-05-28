@@ -93,8 +93,7 @@ function actualizarAvance() {
   document.getElementById("progresoAvance").style.width =
     porcentaje + "%";
 }
-
-function generarPDFResultado(
+async function generarPDFResultado(
   nombre,
   rut,
   establecimiento,
@@ -111,15 +110,40 @@ function generarPDFResultado(
 
   const logo = document.getElementById("logoDaem");
 
-  if (logo) {
-    doc.addImage(
-      logo,
-      "PNG",
-      20,
-      12,
-      38,
-      38
-    );
+  // Esperar carga del logo
+  if (logo && !logo.complete) {
+    await new Promise(resolve => {
+      logo.onload = resolve;
+      logo.onerror = resolve;
+    });
+  }
+
+  try {
+
+    if (logo && logo.complete) {
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = logo.naturalWidth;
+      canvas.height = logo.naturalHeight;
+
+      ctx.drawImage(logo, 0, 0);
+
+      const dataURL = canvas.toDataURL("image/png");
+
+      doc.addImage(
+        dataURL,
+        "PNG",
+        20,
+        12,
+        38,
+        38
+      );
+    }
+
+  } catch (e) {
+    console.error("Error cargando logo:", e);
   }
 
   doc.setFont("helvetica", "bold");
@@ -197,7 +221,7 @@ function generarPDFResultado(
   doc.setFont("helvetica", "normal");
 
   const textoOrientacion =
-    "Este resultado es referencial y tiene como finalidad apoyar el proceso de orientación vocacional del estudiante. No constituye una decisión definitiva, sino una herramienta de apoyo para conversar con la familia, el establecimiento y los equipos de orientación.";
+    "Este resultado es referencial y tiene como finalidad apoyar el proceso de orientación vocacional del estudiante.";
 
   const lineas = doc.splitTextToSize(
     textoOrientacion,
@@ -211,7 +235,13 @@ function generarPDFResultado(
   );
 
   doc.setDrawColor(180);
-  doc.line(20, 268, 190, 268);
+
+  doc.line(
+    20,
+    268,
+    190,
+    268
+  );
 
   doc.setFontSize(10);
 
