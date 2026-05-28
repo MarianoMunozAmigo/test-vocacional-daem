@@ -4,6 +4,8 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+const preguntasCH = [
+
   "¿Disfrutas leer libros y analizar textos en profundidad?",
   "¿Te interesa aprender sobre el funcionamiento del universo y la naturaleza?",
   "¿Te gusta reflexionar sobre problemas éticos o sociales?",
@@ -38,7 +40,6 @@ const preguntasTP = [
   "¿Disfrutas de las tareas que impliquen trabajar con tecnología avanzada?",
   "¿Te gustaría participar en proyectos que requieran resultados concretos y medibles"
 ];
-
 
 function crearPreguntas(lista, contenedorId, prefijo) {
   const contenedor = document.getElementById(contenedorId);
