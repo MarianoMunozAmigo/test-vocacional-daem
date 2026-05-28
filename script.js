@@ -94,42 +94,104 @@ function actualizarAvance() {
     porcentaje + "%";
 }
 
-function generarPDFResultado(nombre, rut, establecimiento, porcentajeCH, porcentajeTP, tendencia) {
+function generarPDFResultado(
+  nombre,
+  rut,
+  establecimiento,
+  porcentajeCH,
+  porcentajeTP,
+  tendencia
+) {
+
   const { jsPDF } = window.jspdf;
 
   const doc = new jsPDF();
 
   const fecha = new Date().toLocaleDateString("es-CL");
 
+  const logo = document.getElementById("logoDaem");
+
+  if (logo) {
+    doc.addImage(
+      logo,
+      "PNG",
+      20,
+      12,
+      38,
+      38
+    );
+  }
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text("Resultado Test Vocacional", 20, 25);
+  doc.setFontSize(20);
+
+  doc.text(
+    "Resultado Test Vocacional",
+    70,
+    25
+  );
 
   doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-  doc.text("Enseñanza Media - DAEM Talca", 20, 34);
-
-  doc.line(20, 40, 190, 40);
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Datos del estudiante", 20, 52);
 
   doc.setFont("helvetica", "normal");
-  doc.text(`Nombre: ${nombre}`, 20, 62);
-  doc.text(`RUT: ${rut}`, 20, 70);
-  doc.text(`Establecimiento: ${establecimiento}`, 20, 78);
-  doc.text(`Fecha: ${fecha}`, 20, 86);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Resultados", 20, 102);
+  doc.text(
+    "Enseñanza Media - DAEM Talca",
+    70,
+    34
+  );
 
-  doc.setFont("helvetica", "normal");
-  doc.text(`Científico Humanista: ${porcentajeCH}%`, 20, 114);
-  doc.text(`Técnico Profesional: ${porcentajeTP}%`, 20, 124);
+  doc.line(20, 55, 190, 55);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
-  doc.text(`Tendencia predominante: ${tendencia}`, 20, 142);
+
+  doc.text(
+    "Datos del estudiante",
+    20,
+    72
+  );
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+
+  doc.text(`Nombre: ${nombre}`, 20, 84);
+  doc.text(`RUT: ${rut}`, 20, 93);
+  doc.text(`Establecimiento: ${establecimiento}`, 20, 102);
+  doc.text(`Fecha: ${fecha}`, 20, 111);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+
+  doc.text(
+    "Resultados",
+    20,
+    130
+  );
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+
+  doc.text(
+    `Científico Humanista: ${porcentajeCH}%`,
+    20,
+    142
+  );
+
+  doc.text(
+    `Técnico Profesional: ${porcentajeTP}%`,
+    20,
+    152
+  );
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+
+  doc.text(
+    `Tendencia predominante: ${tendencia}`,
+    20,
+    172
+  );
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
@@ -137,13 +199,30 @@ function generarPDFResultado(nombre, rut, establecimiento, porcentajeCH, porcent
   const textoOrientacion =
     "Este resultado es referencial y tiene como finalidad apoyar el proceso de orientación vocacional del estudiante. No constituye una decisión definitiva, sino una herramienta de apoyo para conversar con la familia, el establecimiento y los equipos de orientación.";
 
-  const lineas = doc.splitTextToSize(textoOrientacion, 170);
-  doc.text(lineas, 20, 160);
+  const lineas = doc.splitTextToSize(
+    textoOrientacion,
+    170
+  );
+
+  doc.text(
+    lineas,
+    20,
+    192
+  );
+
+  doc.setDrawColor(180);
+  doc.line(20, 268, 190, 268);
 
   doc.setFontSize(10);
-  doc.text("Departamento de Administración de Educación Municipal - Talca", 20, 280);
 
-  const nombreArchivo = `resultado-test-vocacional-${rut}.pdf`;
+  doc.text(
+    "Departamento de Administración de Educación Municipal - Talca",
+    20,
+    278
+  );
+
+  const nombreArchivo =
+    `resultado-test-vocacional-${rut}.pdf`;
 
   doc.save(nombreArchivo);
 }
