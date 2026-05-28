@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel DAEM - Test Vocacional</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="contenedor">
+
+  <header>
+    <h1>Panel DAEM</h1>
+    <p>Resultados comunales del Test Vocacional</p>
+  </header>
+
+  <section class="card" id="login">
+    <h2>Ingreso usuario DAEM</h2>
+
+    <label>Correo</label>
+    <input type="text" id="correo">
+
+    <label>Contraseña</label>
+    <input type="password" id="password">
+
+    <button onclick="login()">Ingresar</button>
+  </section>
+
+  <section class="card oculto" id="panel">
+    <h2>Resumen comunal</h2>
+
+    <div class="resumen-grid">
+      <div class="resumen-card">
+        <span>Total respuestas</span>
+        <strong id="total">0</strong>
+      </div>
+
+      <div class="resumen-card">
+        <span>Promedio Científico Humanista</span>
+        <strong id="promCH">0%</strong>
+      </div>
+
+      <div class="resumen-card">
+        <span>Promedio Técnico Profesional</span>
+        <strong id="promTP">0%</strong>
+      </div>
+    </div>
+
+    <h2>Tendencia por establecimiento</h2>
+
+    <div id="cardsEstablecimientos" class="establecimientos-grid"></div>
+  </section>
+
+  <section class="card oculto" id="detalleEstablecimiento">
+    <button class="btn-secundario" onclick="volverPanel()">← Volver al resumen</button>
+
+    <h2 id="tituloDetalle"></h2>
+
+    <div class="resumen-grid">
+      <div class="resumen-card">
+        <span>Respuestas</span>
+        <strong id="detalleTotal">0</strong>
+      </div>
+
+      <div class="resumen-card">
+        <span>Promedio CH</span>
+        <strong id="detalleCH">0%</strong>
+      </div>
+
+      <div class="resumen-card">
+        <span>Promedio TP</span>
+        <strong id="detalleTP">0%</strong>
+      </div>
+    </div>
+
+    <h3>Estudiantes que respondieron</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>RUT</th>
+          <th>% CH</th>
+          <th>% TP</th>
+          <th>Tendencia</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody id="tablaEstudiantes"></tbody>
+    </table>
+  </section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin.js"></script>
+
+</body>
+</html>

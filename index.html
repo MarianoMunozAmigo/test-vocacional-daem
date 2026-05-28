@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Vocacional Enseñanza Media</title>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div class="contenedor">
+
+    <header>
+      <h1>Test Vocacional Enseñanza Media</h1>
+      <p>
+        Orientación entre modalidad Científico Humanista y Técnico Profesional
+      </p>
+    </header>
+
+    <form id="formTest">
+
+      <!-- DATOS ESTUDIANTE -->
+
+      <section class="card">
+
+        <h2>Datos del estudiante</h2>
+
+        <label>Nombre completo</label>
+        <input
+          type="text"
+          id="nombre"
+          required
+        >
+
+        <label>RUT</label>
+        <input
+          type="text"
+          id="rut"
+          required
+          placeholder="Ej: 12.345.678-9"
+        >
+
+        <label>Establecimiento</label>
+
+        <select id="establecimiento" required>
+
+          <option value="">
+            Seleccione establecimiento
+          </option>
+
+          <option>LICEO MARTA DONOSO ESPEJO</option>
+          <option>LICEO CARLOS CONDELL</option>
+          <option>ESCUELA HERMANO GUIDO GOOSSENS</option>
+          <option>ESCUELA JUAN LUIS SANFUENTES</option>
+          <option>ESCUELA JOSE M. BALMACEDA Y FERNANDEZ</option>
+          <option>ESCUELA PROSPERIDAD</option>
+          <option>ESCUELA CARLOS SPANO</option>
+          <option>ESCUELA LAS ARAUCARIAS</option>
+          <option>ESCUELA CARLOS SALINAS LAGOS</option>
+          <option>ESCUELA BASICA</option>
+          <option>ESCUELA EL EDEN</option>
+          <option>ESCUELA LA FLORIDA</option>
+          <option>ESCUELA VILLA LA PAZ</option>
+          <option>ESCUELA FELIPE CUBILLOS BRILLA EL SOL</option>
+          <option>ESCUELA AURORA DE CHILE</option>
+          <option>ESCUELA UNO SAN AGUSTIN</option>
+          <option>ESCUELA JOSE ABELARDO NUNEZ</option>
+          <option>LORENZO VAROLI GHERARDI</option>
+          <option>ESCUELA LAS AMERICAS</option>
+          <option>ESCUELA COOPERATIVA LIRCAY MANUEL YAÑEZ OLAVE</option>
+          <option>ESCUELA COSTANERA</option>
+          <option>ESCUELA ANTUPEHUEN</option>
+          <option>ESCUELA ESPERANZA</option>
+          <option>LICEO ABATE MOLINA</option>
+          <option>ESCUELA HUILQUILEMU</option>
+          <option>ESCUELA VINA PURISIMA</option>
+          <option>ESCUELA SAN MIGUEL</option>
+          <option>LICEO TECNICO-PROFESIONAL EL SAUCE</option>
+          <option>ESCUELA SANTA MARTA</option>
+          <option>ESCUELA PANGUILEMO</option>
+          <option>ESCUELA BASICA PUERTAS NEGRAS</option>
+          <option>ESCUELA EL ORIENTE</option>
+          <option>ESCUELA VILLA CULENAR</option>
+          <option>ESCUELA CARLOS TRUPP WANNER</option>
+          <option>LICEO COMPLEJO EDUCACIONAL JAVIERA CARRERA</option>
+          <option>LICEO BICENTENARIO ORIENTE DE TALCA</option>
+
+        </select>
+
+      </section>
+
+      <!-- AREA CH -->
+
+      <section class="card">
+
+        <h2>Área Científico Humanista</h2>
+
+        <div id="preguntasCH"></div>
+
+      </section>
+
+      <!-- AREA TP -->
+
+      <section class="card">
+
+        <h2>Área Técnico Profesional</h2>
+
+        <div id="preguntasTP"></div>
+
+      </section>
+
+      <!-- BOTON -->
+
+      <button type="submit">
+        Ver resultado
+      </button>
+
+    </form>
+
+    <!-- RESULTADO -->
+
+    <section
+      id="resultado"
+      class="resultado oculto"
+    ></section>
+
+  </div>
+
+  <!-- SUPABASE -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- SCRIPT -->
+
+  <script src="script.js"></script>
+
+</body>
+</html>
