@@ -44,14 +44,12 @@ const liceosDisponibles = [
   "LICEO MARTA DONOSO ESPEJO",
   "LICEO CARLOS CONDELL",
   "LICEO ABATE MOLINA",
-  "LICEO EL SAUCE",
+  "LICEO TECNICO-PROFESIONAL EL SAUCE",
   "LICEO COMPLEJO EDUCACIONAL JAVIERA CARRERA",
   "LICEO BICENTENARIO ORIENTE DE TALCA",
   "LICEO INDUSTRIAL",
   "LICEO AMELIA COURBIS",
-  "INSTITUTO SUPERIOR DE COMERCIO",
-  "LICEO BICENTENARIO DIEGO PORTALES",
-  "LICEO HECTOR PEREZ BIOTT"
+  "INSTITUTO SUPERIOR DE COMERCIO"
 ];
 
 let resultadoPendiente = null;
@@ -145,24 +143,64 @@ function actualizarAvance() {
 }
 
 function actualizarPreviewEstablecimiento() {
-  const establecimiento = document.getElementById("establecimiento").value;
+  const establecimientoSelect = document.getElementById("establecimiento").value;
   const preview = document.getElementById("establecimientoPreview");
+  const campoOtro = document.getElementById("campoOtroEstablecimiento");
+  const inputOtro = document.getElementById("establecimientoOtro");
 
-  if (!establecimiento) {
+  if (!establecimientoSelect) {
+    campoOtro.classList.add("oculto");
+    inputOtro.required = false;
     preview.classList.add("oculto");
     preview.innerHTML = "";
     return;
   }
 
+  if (establecimientoSelect === "OTROS") {
+    campoOtro.classList.remove("oculto");
+    inputOtro.required = true;
+
+    preview.innerHTML = `
+      <div>
+        <span>Establecimiento seleccionado</span><br>
+        <strong>OTROS</strong>
+      </div>
+    `;
+
+    preview.classList.remove("oculto");
+    return;
+  }
+
+  campoOtro.classList.add("oculto");
+  inputOtro.required = false;
+  inputOtro.value = "";
+
   preview.innerHTML = `
-    ${crearImagenInsignia(establecimiento, "insignia-liceo")}
+    ${crearImagenInsignia(establecimientoSelect, "insignia-liceo")}
     <div>
       <span>Establecimiento seleccionado</span><br>
-      <strong>${establecimiento}</strong>
+      <strong>${establecimientoSelect}</strong>
     </div>
   `;
 
   preview.classList.remove("oculto");
+}
+
+function obtenerDatosEstablecimiento() {
+  const seleccion = document.getElementById("establecimiento").value;
+  const otro = document.getElementById("establecimientoOtro").value.trim().toUpperCase();
+
+  if (seleccion === "OTROS") {
+    return {
+      establecimiento: otro,
+      tipoEstablecimiento: "OTRO"
+    };
+  }
+
+  return {
+    establecimiento: seleccion,
+    tipoEstablecimiento: "DAEM"
+  };
 }
 
 async function obtenerImagenBase64(ruta) {
@@ -246,7 +284,8 @@ async function generarPDFResultado(
   porcentajeCH,
   porcentajeTP,
   tendencia,
-  preferencias = []
+  preferencias = [],
+  tipoEstablecimiento = "DAEM"
 ) {
   try {
     const { jsPDF } = window.jspdf;
@@ -255,9 +294,14 @@ async function generarPDFResultado(
     const fecha = new Date().toLocaleDateString("es-CL");
 
     const logoBase64 = await obtenerLogoBase64();
-    const insigniaEstablecimiento = await obtenerImagenBase64(
-      obtenerRutaInsignia(establecimiento)
-    );
+
+    let insigniaEstablecimiento = null;
+
+    if (tipoEstablecimiento !== "OTRO") {
+      insigniaEstablecimiento = await obtenerImagenBase64(
+        obtenerRutaInsignia(establecimiento)
+      );
+    }
 
     if (logoBase64) {
       try {
@@ -294,11 +338,12 @@ async function generarPDFResultado(
     doc.text(`Nombre: ${nombre}`, 20, 87);
     doc.text(`RUT: ${rut}`, 20, 97);
 
-    const establecimientoLineas = doc.splitTextToSize(
-      `Establecimiento: ${establecimiento}`,
-      125
-    );
+    const textoEstablecimiento =
+      tipoEstablecimiento === "OTRO"
+        ? `Establecimiento externo: ${establecimiento}`
+        : `Establecimiento: ${establecimiento}`;
 
+    const establecimientoLineas = doc.splitTextToSize(textoEstablecimiento, 125);
     doc.text(establecimientoLineas, 20, 107);
     doc.text(`Fecha: ${fecha}`, 20, 123);
 
@@ -369,19 +414,33 @@ async function generarPDFResultado(
 function mostrarResumenTemporal(datos) {
   const resultado = document.getElementById("resultado");
 
+  const bloqueEstablecimiento =
+    datos.tipoEstablecimiento === "OTRO"
+      ? `
+        <div class="establecimiento-preview">
+          <div>
+            <span>Establecimiento externo</span><br>
+            <strong>${datos.establecimiento}</strong>
+          </div>
+        </div>
+      `
+      : `
+        <div class="establecimiento-preview">
+          ${crearImagenInsignia(datos.establecimiento, "insignia-liceo")}
+          <div>
+            <span>Establecimiento</span><br>
+            <strong>${datos.establecimiento}</strong>
+          </div>
+        </div>
+      `;
+
   resultado.innerHTML = `
     <h2>Resultado del Test Vocacional</h2>
 
     <p><strong>Estudiante:</strong> ${datos.nombre}</p>
     <p><strong>RUT:</strong> ${datos.rut}</p>
 
-    <div class="establecimiento-preview">
-      ${crearImagenInsignia(datos.establecimiento, "insignia-liceo")}
-      <div>
-        <span>Establecimiento</span><br>
-        <strong>${datos.establecimiento}</strong>
-      </div>
-    </div>
+    ${bloqueEstablecimiento}
 
     <h3>Científico Humanista</h3>
     <div class="barra">
@@ -458,7 +517,10 @@ document.getElementById("formTest").addEventListener("submit", async function(ev
 
   const nombre = document.getElementById("nombre").value.trim();
   const rut = rutInput.value.trim().toUpperCase();
-  const establecimiento = document.getElementById("establecimiento").value;
+
+  const datosEstablecimiento = obtenerDatosEstablecimiento();
+  const establecimiento = datosEstablecimiento.establecimiento;
+  const tipoEstablecimiento = datosEstablecimiento.tipoEstablecimiento;
 
   if (!validarRutFormato(rut)) {
     mensajeRut.textContent =
@@ -466,6 +528,11 @@ document.getElementById("formTest").addEventListener("submit", async function(ev
 
     rutInput.classList.add("input-error");
     rutInput.focus();
+    return;
+  }
+
+  if (!establecimiento) {
+    alert("Debes ingresar el establecimiento al que perteneces.");
     return;
   }
 
@@ -510,6 +577,7 @@ document.getElementById("formTest").addEventListener("submit", async function(ev
     nombre,
     rut,
     establecimiento,
+    tipoEstablecimiento,
     puntajeCH,
     puntajeTP,
     porcentajeCH,
@@ -559,6 +627,7 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
       nombre: resultadoPendiente.nombre,
       rut: resultadoPendiente.rut,
       establecimiento: resultadoPendiente.establecimiento,
+      tipo_establecimiento: resultadoPendiente.tipoEstablecimiento,
       puntaje_ch: resultadoPendiente.puntajeCH,
       puntaje_tp: resultadoPendiente.puntajeTP,
       porcentaje_ch: resultadoPendiente.porcentajeCH,
@@ -607,7 +676,8 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
         ${resultadoPendiente.porcentajeCH},
         ${resultadoPendiente.porcentajeTP},
         '${resultadoPendiente.tendencia}',
-        ${JSON.stringify(preferencias).replace(/"/g, "&quot;")}
+        ${JSON.stringify(preferencias).replace(/"/g, "&quot;")},
+        '${resultadoPendiente.tipoEstablecimiento}'
       )"
     >
       Descargar resultado en PDF
@@ -621,11 +691,15 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
     resultadoPendiente.porcentajeCH,
     resultadoPendiente.porcentajeTP,
     resultadoPendiente.tendencia,
-    preferencias
+    preferencias,
+    resultadoPendiente.tipoEstablecimiento
   );
 
   document.getElementById("formTest").reset();
   document.getElementById("seleccionLiceos").classList.add("oculto");
+  document.getElementById("campoOtroEstablecimiento").classList.add("oculto");
+  document.getElementById("establecimientoOtro").required = false;
+  document.getElementById("establecimientoOtro").value = "";
   document.getElementById("establecimientoPreview").classList.add("oculto");
   document.getElementById("establecimientoPreview").innerHTML = "";
 

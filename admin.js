@@ -9,7 +9,7 @@ let respuestasGlobales = [];
 const establecimientos = [
   "ESCUELA HERMANO GUIDO GOOSSENS",
   "ESCUELA JUAN LUIS SANFUENTES",
-  "ESCUELA JOSE MANUEL BALMACEDA Y FERNANDEZ",
+  "ESCUELA JOSE M. BALMACEDA Y FERNANDEZ",
   "ESCUELA PROSPERIDAD",
   "ESCUELA CARLOS SPANO",
   "ESCUELA LAS ARAUCARIAS",
@@ -24,7 +24,7 @@ const establecimientos = [
   "ESCUELA JOSE ABELARDO NUNEZ",
   "LORENZO VAROLI GHERARDI",
   "ESCUELA LAS AMERICAS",
-  "ESCUELA COOPERATIVA LIRCAY",
+  "ESCUELA COOPERATIVA LIRCAY MANUEL YAÑEZ OLAVE",
   "ESCUELA COSTANERA",
   "ESCUELA ANTUPEHUEN",
   "ESCUELA ESPERANZA",
@@ -33,10 +33,10 @@ const establecimientos = [
   "ESCUELA SAN MIGUEL",
   "ESCUELA SANTA MARTA",
   "ESCUELA PANGUILEMO",
-  "ESCUELA PUERTAS NEGRAS",
+  "ESCUELA BASICA PUERTAS NEGRAS",
   "ESCUELA EL ORIENTE",
   "ESCUELA VILLA CULENAR",
-  "ESCUELA CARLOS TRUPP WANNER",
+  "ESCUELA CARLOS TRUPP WANNER"
 ];
 
 function obtenerRutaInsignia(nombre) {
@@ -60,6 +60,10 @@ function crearImagenInsignia(nombre, clase = "insignia-card") {
       onerror="this.style.display='none'"
     >
   `;
+}
+
+function esOtroEstablecimiento(r) {
+  return r.tipo_establecimiento === "OTRO";
 }
 
 async function login() {
@@ -107,9 +111,12 @@ async function cargarResultados() {
     ? Math.round(data.reduce((sum, r) => sum + r.porcentaje_tp, 0) / total)
     : 0;
 
+  const totalOtros = data.filter(esOtroEstablecimiento).length;
+
   document.getElementById("total").textContent = total;
   document.getElementById("promCH").textContent = promedioCH + "%";
   document.getElementById("promTP").textContent = promedioTP + "%";
+  document.getElementById("totalOtros").textContent = totalOtros;
 
   crearCardsEstablecimientos(data);
   crearTablaPreferenciasLiceos(data);
@@ -121,7 +128,10 @@ function crearCardsEstablecimientos(data) {
   contenedor.innerHTML = "";
 
   establecimientos.forEach(est => {
-    const respuestas = data.filter(r => r.establecimiento === est);
+    const respuestas = data.filter(
+      r => r.establecimiento === est && !esOtroEstablecimiento(r)
+    );
+
     const total = respuestas.length;
 
     let ch = 0;
@@ -257,9 +267,72 @@ function crearTablaPreferenciasLiceos(data) {
     });
 }
 
+function crearCardEstudiante(r) {
+  const fecha = r.fecha
+    ? new Date(r.fecha).toLocaleDateString("es-CL")
+    : "";
+
+  const bloqueInsignia = esOtroEstablecimiento(r)
+    ? ""
+    : crearImagenInsignia(r.establecimiento, "insignia-card");
+
+  const etiquetaEstablecimiento = esOtroEstablecimiento(r)
+    ? "Establecimiento externo"
+    : "Establecimiento DAEM";
+
+  const card = document.createElement("div");
+  card.className = "estudiante-card";
+
+  card.innerHTML = `
+    <div class="estudiante-header">
+      ${bloqueInsignia}
+      <div>
+        <h3>${r.nombre}</h3>
+        <p>${r.rut}</p>
+      </div>
+    </div>
+
+    <div class="estudiante-datos">
+      <div>
+        <span>${etiquetaEstablecimiento}</span>
+        <strong>${r.establecimiento}</strong>
+      </div>
+
+      <div>
+        <span>Científico Humanista</span>
+        <strong>${r.porcentaje_ch}%</strong>
+      </div>
+
+      <div>
+        <span>Técnico Profesional</span>
+        <strong>${r.porcentaje_tp}%</strong>
+      </div>
+
+      <div>
+        <span>Tendencia</span>
+        <strong>${r.tendencia}</strong>
+      </div>
+
+      <div>
+        <span>Fecha</span>
+        <strong>${fecha}</strong>
+      </div>
+    </div>
+
+    <div class="preferencias-admin">
+      <h4>Liceos de preferencia</h4>
+      ${crearPreferenciaAdmin(r.preferencia_1, "1ª preferencia")}
+      ${crearPreferenciaAdmin(r.preferencia_2, "2ª preferencia")}
+      ${crearPreferenciaAdmin(r.preferencia_3, "3ª preferencia")}
+    </div>
+  `;
+
+  return card;
+}
+
 function verDetalleEstablecimiento(establecimiento) {
   const respuestas = respuestasGlobales.filter(
-    r => r.establecimiento === establecimiento
+    r => r.establecimiento === establecimiento && !esOtroEstablecimiento(r)
   );
 
   const total = respuestas.length;
@@ -299,53 +372,55 @@ function verDetalleEstablecimiento(establecimiento) {
   }
 
   respuestas.forEach(r => {
-    const fecha = r.fecha
-      ? new Date(r.fecha).toLocaleDateString("es-CL")
-      : "";
+    contenedor.appendChild(crearCardEstudiante(r));
+  });
 
-    const card = document.createElement("div");
-    card.className = "estudiante-card";
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
 
-    card.innerHTML = `
-      <div class="estudiante-header">
-        ${crearImagenInsignia(r.establecimiento, "insignia-card")}
-        <div>
-          <h3>${r.nombre}</h3>
-          <p>${r.rut}</p>
-        </div>
-      </div>
+function verOtrosEstablecimientos() {
+  const respuestas = respuestasGlobales.filter(esOtroEstablecimiento);
 
-      <div class="estudiante-datos">
-        <div>
-          <span>Científico Humanista</span>
-          <strong>${r.porcentaje_ch}%</strong>
-        </div>
+  const total = respuestas.length;
 
-        <div>
-          <span>Técnico Profesional</span>
-          <strong>${r.porcentaje_tp}%</strong>
-        </div>
+  const promedioCH = total > 0
+    ? Math.round(respuestas.reduce((sum, r) => sum + r.porcentaje_ch, 0) / total)
+    : 0;
 
-        <div>
-          <span>Tendencia</span>
-          <strong>${r.tendencia}</strong>
-        </div>
+  const promedioTP = total > 0
+    ? Math.round(respuestas.reduce((sum, r) => sum + r.porcentaje_tp, 0) / total)
+    : 0;
 
-        <div>
-          <span>Fecha</span>
-          <strong>${fecha}</strong>
-        </div>
-      </div>
+  document.getElementById("panel").classList.add("oculto");
+  document.getElementById("detalleEstablecimiento").classList.remove("oculto");
 
-      <div class="preferencias-admin">
-        <h4>Liceos de preferencia</h4>
-        ${crearPreferenciaAdmin(r.preferencia_1, "1ª preferencia")}
-        ${crearPreferenciaAdmin(r.preferencia_2, "2ª preferencia")}
-        ${crearPreferenciaAdmin(r.preferencia_3, "3ª preferencia")}
+  document.getElementById("tituloDetalle").innerHTML = `
+    <div class="card-header-establecimiento">
+      <span>Otros establecimientos</span>
+    </div>
+  `;
+
+  document.getElementById("detalleTotal").textContent = total;
+  document.getElementById("detalleCH").textContent = promedioCH + "%";
+  document.getElementById("detalleTP").textContent = promedioTP + "%";
+
+  const contenedor = document.getElementById("cardsEstudiantes");
+  contenedor.innerHTML = "";
+
+  if (respuestas.length === 0) {
+    contenedor.innerHTML = `
+      <div class="estudiante-card">
+        <p>Aún no existen respuestas de otros establecimientos.</p>
       </div>
     `;
+    return;
+  }
 
-    contenedor.appendChild(card);
+  respuestas.forEach(r => {
+    contenedor.appendChild(crearCardEstudiante(r));
   });
 
   window.scrollTo({
@@ -411,6 +486,8 @@ function descargarPDFComunal() {
 
   const fecha = new Date().toLocaleDateString("es-CL");
   const total = respuestasGlobales.length;
+  const totalOtros = respuestasGlobales.filter(esOtroEstablecimiento).length;
+  const totalDaem = total - totalOtros;
 
   const promedioCH = Math.round(
     respuestasGlobales.reduce((sum, r) => sum + r.porcentaje_ch, 0) / total
@@ -447,6 +524,10 @@ function descargarPDFComunal() {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.text(`Total de respuestas: ${total}`, 20, y);
+  y += 7;
+  doc.text(`Respuestas establecimientos DAEM: ${totalDaem}`, 20, y);
+  y += 7;
+  doc.text(`Respuestas otros establecimientos: ${totalOtros}`, 20, y);
   y += 7;
   doc.text(`Promedio Científico Humanista: ${promedioCH}%`, 20, y);
   y += 7;
@@ -507,6 +588,10 @@ function descargarPDFComunal() {
       ? new Date(r.fecha).toLocaleDateString("es-CL")
       : "-";
 
+    const tipo = esOtroEstablecimiento(r)
+      ? "OTRO ESTABLECIMIENTO"
+      : "DAEM";
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     y = escribirTextoLargo(
@@ -523,6 +608,7 @@ function descargarPDFComunal() {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
 
+    y = escribirTextoLargo(doc, `Tipo: ${tipo}`, 24, y, 160, 5);
     y = escribirTextoLargo(doc, `Establecimiento: ${r.establecimiento}`, 24, y, 160, 5);
     y = escribirTextoLargo(
       doc,

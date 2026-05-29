@@ -39,6 +39,10 @@
       Descargar informe comunal PDF
     </button>
 
+    <button type="button" class="btn-secundario btn-otros" onclick="verOtrosEstablecimientos()">
+      Ver otros establecimientos
+    </button>
+
     <div class="resumen-grid">
       <div class="resumen-card">
         <span>Total respuestas</span>
@@ -54,9 +58,14 @@
         <span>Promedio Técnico Profesional</span>
         <strong id="promTP">0%</strong>
       </div>
+
+      <div class="resumen-card">
+        <span>Otros establecimientos</span>
+        <strong id="totalOtros">0</strong>
+      </div>
     </div>
 
-    <h2>Tendencia por establecimiento</h2>
+    <h2>Tendencia por establecimiento DAEM</h2>
     <div id="cardsEstablecimientos" class="establecimientos-grid"></div>
 
     <h2>Preferencias de liceos</h2>

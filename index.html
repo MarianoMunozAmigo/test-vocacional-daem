@@ -54,9 +54,7 @@
 
         <label>Establecimiento</label>
         <select id="establecimiento" required>
-          <option value="">Seleccione establecimiento</option>
-          <option>ESCUELA HERMANO GUIDO GOOSSENS</option>
-          <option>ESCUELA JUAN LUIS SANFUENTES</option>
+     <option>ESCUELA JUAN LUIS SANFUENTES</option>
           <option>ESCUELA JOSE MANUEL BALMACEDA Y FERNANDEZ</option>
           <option>ESCUELA PROSPERIDAD</option>
           <option>ESCUELA CARLOS SPANO</option>
@@ -85,7 +83,18 @@
           <option>ESCUELA EL ORIENTE</option>
           <option>ESCUELA VILLA CULENAR</option>
           <option>ESCUELA CARLOS TRUPP WANNER</option>
+          <option value="OTROS">OTROS</option>
         </select>
+
+        <div id="campoOtroEstablecimiento" class="oculto">
+          <label>Escribe el nombre de tu establecimiento</label>
+          <input
+            type="text"
+            id="establecimientoOtro"
+            placeholder="Ej: Colegio Juan Ignacio Molina"
+            autocomplete="off"
+          >
+        </div>
 
         <div id="establecimientoPreview" class="establecimiento-preview oculto"></div>
       </section>
