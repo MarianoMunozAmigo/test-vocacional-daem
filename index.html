@@ -13,9 +13,13 @@
 
   <div class="contenedor">
 
-    <header>
-      <h1>Test Vocacional Enseñanza Media</h1>
-      <p>Descubre tu tendencia entre Científico Humanista y Técnico Profesional</p>
+    <header class="header-principal">
+      <img src="/images/logo-daem.png" alt="Logo DAEM Talca" class="logo-header">
+
+      <div class="header-texto">
+        <h1>Test Vocacional Enseñanza Media</h1>
+        <p>Descubre tu tendencia entre Científico Humanista y Técnico Profesional</p>
+      </div>
     </header>
 
     <section class="avance-card">
@@ -51,11 +55,9 @@
         <label>Establecimiento</label>
         <select id="establecimiento" required>
           <option value="">Seleccione establecimiento</option>
-          <option>LICEO MARTA DONOSO ESPEJO</option>
-          <option>LICEO CARLOS CONDELL</option>
           <option>ESCUELA HERMANO GUIDO GOOSSENS</option>
           <option>ESCUELA JUAN LUIS SANFUENTES</option>
-          <option>ESCUELA JOSE M. BALMACEDA Y FERNANDEZ</option>
+          <option>ESCUELA JOSE MANUEL BALMACEDA Y FERNANDEZ</option>
           <option>ESCUELA PROSPERIDAD</option>
           <option>ESCUELA CARLOS SPANO</option>
           <option>ESCUELA LAS ARAUCARIAS</option>
@@ -70,24 +72,22 @@
           <option>ESCUELA JOSE ABELARDO NUNEZ</option>
           <option>LORENZO VAROLI GHERARDI</option>
           <option>ESCUELA LAS AMERICAS</option>
-          <option>ESCUELA COOPERATIVA LIRCAY MANUEL YAÑEZ OLAVE</option>
+          <option>ESCUELA COOPERATIVA LIRCAY</option>
           <option>ESCUELA COSTANERA</option>
           <option>ESCUELA ANTUPEHUEN</option>
           <option>ESCUELA ESPERANZA</option>
-          <option>LICEO ABATE MOLINA</option>
           <option>ESCUELA HUILQUILEMU</option>
           <option>ESCUELA VINA PURISIMA</option>
           <option>ESCUELA SAN MIGUEL</option>
-          <option>LICEO TECNICO-PROFESIONAL EL SAUCE</option>
           <option>ESCUELA SANTA MARTA</option>
           <option>ESCUELA PANGUILEMO</option>
-          <option>ESCUELA BASICA PUERTAS NEGRAS</option>
+          <option>ESCUELA PUERTAS NEGRAS</option>
           <option>ESCUELA EL ORIENTE</option>
           <option>ESCUELA VILLA CULENAR</option>
           <option>ESCUELA CARLOS TRUPP WANNER</option>
-          <option>LICEO COMPLEJO EDUCACIONAL JAVIERA CARRERA</option>
-          <option>LICEO BICENTENARIO ORIENTE DE TALCA</option>
         </select>
+
+        <div id="establecimientoPreview" class="establecimiento-preview oculto"></div>
       </section>
 
       <section class="card area-ch">

@@ -11,9 +11,13 @@
 
 <div class="contenedor">
 
-  <header>
-    <h1>Panel DAEM</h1>
-    <p>Resultados comunales del Test Vocacional</p>
+  <header class="header-principal">
+    <img src="/images/logo-daem.png" alt="Logo DAEM Talca" class="logo-header">
+
+    <div class="header-texto">
+      <h1>Panel DAEM</h1>
+      <p>Resultados comunales del Test Vocacional</p>
+    </div>
   </header>
 
   <section class="card" id="login">
@@ -30,6 +34,10 @@
 
   <section class="card oculto" id="panel">
     <h2>Resumen comunal</h2>
+
+    <button type="button" onclick="descargarPDFComunal()">
+      Descargar informe comunal PDF
+    </button>
 
     <div class="resumen-grid">
       <div class="resumen-card">
@@ -49,8 +57,22 @@
     </div>
 
     <h2>Tendencia por establecimiento</h2>
-
     <div id="cardsEstablecimientos" class="establecimientos-grid"></div>
+
+    <h2>Preferencias de liceos</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Liceo</th>
+          <th>Total interesados</th>
+          <th>1ª preferencia</th>
+          <th>2ª preferencia</th>
+          <th>3ª preferencia</th>
+        </tr>
+      </thead>
+      <tbody id="tablaPreferenciasLiceos"></tbody>
+    </table>
   </section>
 
   <section class="card oculto" id="detalleEstablecimiento">
@@ -77,24 +99,13 @@
 
     <h3>Estudiantes que respondieron</h3>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>RUT</th>
-          <th>% CH</th>
-          <th>% TP</th>
-          <th>Tendencia</th>
-          <th>Fecha</th>
-        </tr>
-      </thead>
-      <tbody id="tablaEstudiantes"></tbody>
-    </table>
+    <div id="cardsEstudiantes" class="estudiantes-grid"></div>
   </section>
 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="admin.js"></script>
 
 </body>

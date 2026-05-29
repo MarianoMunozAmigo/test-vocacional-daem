@@ -44,12 +44,38 @@ const liceosDisponibles = [
   "LICEO MARTA DONOSO ESPEJO",
   "LICEO CARLOS CONDELL",
   "LICEO ABATE MOLINA",
-  "LICEO TECNICO-PROFESIONAL EL SAUCE",
+  "LICEO EL SAUCE",
   "LICEO COMPLEJO EDUCACIONAL JAVIERA CARRERA",
-  "LICEO BICENTENARIO ORIENTE DE TALCA"
+  "LICEO BICENTENARIO ORIENTE DE TALCA",
+  "LICEO INDUSTRIAL",
+  "LICEO AMELIA COURBIS",
+  "INSTITUTO SUPERIOR DE COMERCIO"
 ];
 
 let resultadoPendiente = null;
+
+function obtenerRutaInsignia(nombre) {
+  return "/images/insignias/" +
+    nombre
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/ñ/g, "n")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") +
+    ".jpg";
+}
+
+function crearImagenInsignia(nombre, clase = "insignia-liceo") {
+  return `
+    <img
+      class="${clase}"
+      src="${obtenerRutaInsignia(nombre)}"
+      alt="Insignia ${nombre}"
+      onerror="this.style.display='none'"
+    >
+  `;
+}
 
 function crearPreguntas(lista, contenedorId, prefijo) {
   const contenedor = document.getElementById(contenedorId);
@@ -90,6 +116,21 @@ function validarRutFormato(rut) {
   return /^[0-9]{7,8}-[0-9K]$/.test(rut);
 }
 
+async function verificarRutYaRespondio(rut) {
+  const { data, error } = await supabaseClient
+    .from("respuestas_test_vocacional")
+    .select("rut")
+    .eq("rut", rut)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error verificando RUT:", error);
+    return false;
+  }
+
+  return data !== null;
+}
+
 function actualizarAvance() {
   const respondidas = document.querySelectorAll('input[type="radio"]:checked').length;
   const total = 30;
@@ -101,12 +142,33 @@ function actualizarAvance() {
   document.getElementById("progresoAvance").style.width = porcentaje + "%";
 }
 
-async function obtenerLogoBase64() {
+function actualizarPreviewEstablecimiento() {
+  const establecimiento = document.getElementById("establecimiento").value;
+  const preview = document.getElementById("establecimientoPreview");
+
+  if (!establecimiento) {
+    preview.classList.add("oculto");
+    preview.innerHTML = "";
+    return;
+  }
+
+  preview.innerHTML = `
+    ${crearImagenInsignia(establecimiento, "insignia-liceo")}
+    <div>
+      <span>Establecimiento seleccionado</span><br>
+      <strong>${establecimiento}</strong>
+    </div>
+  `;
+
+  preview.classList.remove("oculto");
+}
+
+async function obtenerImagenBase64(ruta) {
   try {
-    const response = await fetch("/images/logo-daem.png");
+    const response = await fetch(ruta);
 
     if (!response.ok) {
-      throw new Error("No se encontró el logo en images/logo-daem.png");
+      throw new Error("No se encontró la imagen: " + ruta);
     }
 
     const blob = await response.blob();
@@ -120,9 +182,13 @@ async function obtenerLogoBase64() {
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error("Error cargando logo:", error);
+    console.error("Error cargando imagen:", error);
     return null;
   }
+}
+
+async function obtenerLogoBase64() {
+  return await obtenerImagenBase64("/images/logo-daem.png");
 }
 
 function crearListaLiceos() {
@@ -136,6 +202,7 @@ function crearListaLiceos() {
 
     label.innerHTML = `
       <input type="checkbox" name="liceosPreferencia" value="${liceo}">
+      ${crearImagenInsignia(liceo, "insignia-liceo")}
       <span>${liceo}</span>
     `;
 
@@ -184,7 +251,11 @@ async function generarPDFResultado(
     const doc = new jsPDF();
 
     const fecha = new Date().toLocaleDateString("es-CL");
+
     const logoBase64 = await obtenerLogoBase64();
+    const insigniaEstablecimiento = await obtenerImagenBase64(
+      obtenerRutaInsignia(establecimiento)
+    );
 
     if (logoBase64) {
       try {
@@ -204,6 +275,14 @@ async function generarPDFResultado(
 
     doc.line(20, 60, 190, 60);
 
+    if (insigniaEstablecimiento) {
+      try {
+        doc.addImage(insigniaEstablecimiento, "JPEG", 155, 70, 24, 24);
+      } catch (errorInsigniaEst) {
+        console.error("Error agregando insignia del establecimiento:", errorInsigniaEst);
+      }
+    }
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.text("Datos del estudiante", 20, 75);
@@ -215,7 +294,7 @@ async function generarPDFResultado(
 
     const establecimientoLineas = doc.splitTextToSize(
       `Establecimiento: ${establecimiento}`,
-      170
+      125
     );
 
     doc.text(establecimientoLineas, 20, 107);
@@ -241,19 +320,31 @@ async function generarPDFResultado(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
 
-    let yPreferencias = 216;
+    let yPreferencias = 218;
 
-    preferencias.forEach((liceo, index) => {
-      const lineasLiceo = doc.splitTextToSize(`${index + 1}. ${liceo}`, 170);
-      doc.text(lineasLiceo, 20, yPreferencias);
-      yPreferencias += lineasLiceo.length * 7;
-    });
+    for (let i = 0; i < preferencias.length; i++) {
+      const liceo = preferencias[i];
+      const insigniaLiceo = await obtenerImagenBase64(obtenerRutaInsignia(liceo));
+
+      if (insigniaLiceo) {
+        try {
+          doc.addImage(insigniaLiceo, "JPEG", 20, yPreferencias - 7, 12, 12);
+        } catch (errorInsigniaLiceo) {
+          console.error("Error agregando insignia del liceo:", errorInsigniaLiceo);
+        }
+      }
+
+      const lineasLiceo = doc.splitTextToSize(`${i + 1}. ${liceo}`, 145);
+      doc.text(lineasLiceo, 36, yPreferencias);
+
+      yPreferencias += 14;
+    }
 
     const textoOrientacion =
       "Este resultado es referencial y tiene como finalidad apoyar el proceso de orientación vocacional del estudiante. No constituye una decisión definitiva, sino una herramienta de apoyo para conversar con la familia, el establecimiento y los equipos de orientación.";
 
     const lineas = doc.splitTextToSize(textoOrientacion, 170);
-    doc.text(lineas, 20, 244);
+    doc.text(lineas, 20, 250);
 
     doc.line(20, 268, 190, 268);
 
@@ -281,7 +372,14 @@ function mostrarResumenTemporal(datos) {
 
     <p><strong>Estudiante:</strong> ${datos.nombre}</p>
     <p><strong>RUT:</strong> ${datos.rut}</p>
-    <p><strong>Establecimiento:</strong> ${datos.establecimiento}</p>
+
+    <div class="establecimiento-preview">
+      ${crearImagenInsignia(datos.establecimiento, "insignia-liceo")}
+      <div>
+        <span>Establecimiento</span><br>
+        <strong>${datos.establecimiento}</strong>
+      </div>
+    </div>
 
     <h3>Científico Humanista</h3>
     <div class="barra">
@@ -317,10 +415,12 @@ document.querySelectorAll('input[type="radio"]').forEach(radio => {
   radio.addEventListener("change", actualizarAvance);
 });
 
+document.getElementById("establecimiento").addEventListener("change", actualizarPreviewEstablecimiento);
+
 const rutInput = document.getElementById("rut");
 const mensajeRut = document.getElementById("mensajeRut");
 
-rutInput.addEventListener("blur", function () {
+rutInput.addEventListener("blur", async function () {
   const rut = rutInput.value.trim().toUpperCase();
 
   if (rut === "") {
@@ -334,14 +434,24 @@ rutInput.addEventListener("blur", function () {
       "El RUT debe ingresarse sin puntos y con guion. Ejemplo: 12345678-9";
 
     rutInput.classList.add("input-error");
-  } else {
-    mensajeRut.textContent = "";
-    rutInput.classList.remove("input-error");
-    rutInput.value = rut;
+    return;
+  }
+
+  rutInput.value = rut;
+  mensajeRut.textContent = "";
+  rutInput.classList.remove("input-error");
+
+  const yaRespondio = await verificarRutYaRespondio(rut);
+
+  if (yaRespondio) {
+    mensajeRut.textContent =
+      "Este RUT ya registró una respuesta. Cada estudiante puede responder solo una vez.";
+
+    rutInput.classList.add("input-error");
   }
 });
 
-document.getElementById("formTest").addEventListener("submit", function(event) {
+document.getElementById("formTest").addEventListener("submit", async function(event) {
   event.preventDefault();
 
   const nombre = document.getElementById("nombre").value.trim();
@@ -351,6 +461,17 @@ document.getElementById("formTest").addEventListener("submit", function(event) {
   if (!validarRutFormato(rut)) {
     mensajeRut.textContent =
       "El RUT debe ingresarse sin puntos y con guion. Ejemplo: 12345678-9";
+
+    rutInput.classList.add("input-error");
+    rutInput.focus();
+    return;
+  }
+
+  const yaRespondio = await verificarRutYaRespondio(rut);
+
+  if (yaRespondio) {
+    mensajeRut.textContent =
+      "Este RUT ya registró una respuesta. Cada estudiante puede responder solo una vez.";
 
     rutInput.classList.add("input-error");
     rutInput.focus();
@@ -422,6 +543,14 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
     return;
   }
 
+  const yaRespondio = await verificarRutYaRespondio(resultadoPendiente.rut);
+
+  if (yaRespondio) {
+    mensaje.textContent =
+      "Este RUT ya registró una respuesta. Cada estudiante puede responder solo una vez.";
+    return;
+  }
+
   const { error } = await supabaseClient
     .from("respuestas_test_vocacional")
     .insert({
@@ -456,7 +585,14 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
     <div class="liceos-elegidos">
       <h3>Liceos seleccionados</h3>
       <ol>
-        ${preferencias.map(liceo => `<li>${liceo}</li>`).join("")}
+        ${preferencias.map(liceo => `
+          <li>
+            <div class="establecimiento-preview">
+              ${crearImagenInsignia(liceo, "insignia-liceo")}
+              <strong>${liceo}</strong>
+            </div>
+          </li>
+        `).join("")}
       </ol>
     </div>
 
@@ -488,6 +624,8 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
 
   document.getElementById("formTest").reset();
   document.getElementById("seleccionLiceos").classList.add("oculto");
+  document.getElementById("establecimientoPreview").classList.add("oculto");
+  document.getElementById("establecimientoPreview").innerHTML = "";
 
   document.querySelectorAll('input[name="liceosPreferencia"]').forEach(check => {
     check.checked = false;
