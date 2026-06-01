@@ -951,3 +951,12 @@ tr:nth-child(even) {
     grid-template-columns: 1fr;
   }
 }
+.liceo-opcion small {
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.liceo-opcion strong {
+  color: #222;
+}

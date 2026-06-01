@@ -41,22 +41,55 @@ const preguntasTP = [
 ];
 
 const liceosDisponibles = [
-  "LICEO MARTA DONOSO ESPEJO",
-  "LICEO CARLOS CONDELL",
-  "LICEO ABATE MOLINA",
-  "LICEO EL SAUCE",
-  "LICEO COMPLEJO EDUCACIONAL JAVIERA CARRERA",
-  "LICEO BICENTENARIO ORIENTE DE TALCA",
-  "LICEO INDUSTRIAL",
-  "LICEO AMELIA COURBIS",
-  "INSTITUTO SUPERIOR DE COMERCIO",
-  "LICEO HECTOR PEREZ BIOTT",
-  "LICEO BICENTENARIO DIEGO PORTALES"
+  {
+    nombre: "LICEO MARTA DONOSO ESPEJO",
+    detalle: "Científico Humanista"
+  },
+  {
+    nombre: "LICEO CARLOS CONDELL",
+    detalle: "Científico Humanista - Técnico Profesional"
+  },
+  {
+    nombre: "LICEO ABATE MOLINA",
+    detalle: "Científico Humanista"
+  },
+  {
+    nombre: "LICEO EL SAUCE",
+    detalle: "Técnico Profesional"
+  },
+  {
+    nombre: "LICEO COMPLEJO EDUCACIONAL JAVIERA CARRERA",
+    detalle: "Técnico Profesional"
+  },
+  {
+    nombre: "LICEO BICENTENARIO ORIENTE DE TALCA",
+    detalle: "Científico Humanista"
+  },
+  {
+    nombre: "LICEO INDUSTRIAL",
+    detalle: "Técnico Profesional"
+  },
+  {
+    nombre: "LICEO AMELIA COURBIS",
+    detalle: "Técnico Profesional"
+  },
+  {
+    nombre: "INSTITUTO SUPERIOR DE COMERCIO",
+    detalle: "Científico Humanista - Técnico Profesional"
+  },
+  {
+    nombre: "LICEO HECTOR PEREZ BIOTT",
+    detalle: "Científico Humanista"
+  },
+  {
+    nombre: "LICEO BICENTENARIO DIEGO PORTALES",
+    detalle: "Científico Humanista - Técnico Profesional"
+  }
 ];
-
 const OPCION_SIN_PREFERENCIA = "SIN PREFERENCIA DEFINIDA";
 
 let resultadoPendiente = null;
+let ordenPreferencias = [];
 
 function obtenerRutaInsignia(nombre) {
   return "/images/insignias/" +
@@ -245,9 +278,12 @@ function crearListaLiceos() {
     label.className = "liceo-opcion";
 
     label.innerHTML = `
-      <input type="checkbox" name="liceosPreferencia" value="${liceo}">
-      ${crearImagenInsignia(liceo, "insignia-liceo")}
-      <span>${liceo}</span>
+      <input type="checkbox" name="liceosPreferencia" value="${liceo.nombre}">
+      ${crearImagenInsignia(liceo.nombre, "insignia-liceo")}
+      <span>
+        <strong>${liceo.nombre}</strong><br>
+        <small>${liceo.detalle}</small>
+      </span>
     `;
 
     contenedor.appendChild(label);
@@ -271,6 +307,14 @@ function crearListaLiceos() {
         sinPreferencia.checked = false;
       }
 
+      if (this.checked) {
+        if (!ordenPreferencias.includes(this.value)) {
+          ordenPreferencias.push(this.value);
+        }
+      } else {
+        ordenPreferencias = ordenPreferencias.filter(liceo => liceo !== this.value);
+      }
+
       validarSeleccionLiceos.call(this);
     });
   });
@@ -282,6 +326,8 @@ function crearListaLiceos() {
       checksLiceos.forEach(check => {
         check.checked = false;
       });
+
+      ordenPreferencias = [];
     }
 
     validarSeleccionLiceos.call(this);
@@ -307,6 +353,7 @@ function validarSeleccionLiceos() {
   if (seleccionados.length > 3) {
     if (this && this.type === "checkbox") {
       this.checked = false;
+      ordenPreferencias = ordenPreferencias.filter(liceo => liceo !== this.value);
     }
 
     mensaje.textContent = "Puedes seleccionar un máximo de 3 liceos.";
@@ -327,9 +374,7 @@ function obtenerLiceosSeleccionados() {
     return [OPCION_SIN_PREFERENCIA];
   }
 
-  return Array.from(
-    document.querySelectorAll('input[name="liceosPreferencia"]:checked')
-  ).map(input => input.value);
+  return ordenPreferencias.slice(0, 3);
 }
 
 function cerrarModalResultado() {
@@ -809,7 +854,7 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
   rutInput.classList.remove("input-error");
 
   resultadoPendiente = null;
-
+ordenPreferencias = [];
   actualizarAvance();
   cerrarModalResultado();
 
