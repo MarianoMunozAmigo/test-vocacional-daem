@@ -33,15 +33,30 @@
   </section>
 
   <section class="card oculto" id="panel">
-    <h2>Resumen comunal</h2>
 
-    <button type="button" onclick="descargarPDFComunal()">
-      Descargar informe comunal PDF
-    </button>
+    <div class="encabezado-resumen">
+      <h2>Resumen Comunal</h2>
 
-    <button type="button" class="btn-secundario btn-otros" onclick="verOtrosEstablecimientos()">
-      Ver otros establecimientos
-    </button>
+<div class="acciones-reporte">
+
+  <button
+    class="btn-icono btn-pdf"
+    onclick="descargarPDFComunal()"
+    title="Descargar Informe PDF"
+  >
+    <span>📄</span>
+  </button>
+
+  <button
+    class="btn-icono btn-excel"
+    onclick="descargarExcelRespuestas()"
+    title="Exportar Excel"
+  >
+    <span>📊</span>
+  </button>
+
+</div>
+    </div>
 
     <div class="resumen-grid">
       <div class="resumen-card">

@@ -18,9 +18,55 @@
 
       <div class="header-texto">
         <h1>Test Vocacional Enseñanza Media</h1>
-        <p>Descubre tu tendencia entre Científico Humanista y Técnico Profesional</p>
+        <p>Descubre tus intereses y conoce las alternativas educativas disponibles.</p>
       </div>
     </header>
+
+    <section class="card informacion-test">
+
+      <h2>¿Qué es este Test Vocacional?</h2>
+
+      <p>
+        Este test tiene como objetivo ayudarte a identificar cuáles son tus intereses
+        y preferencias para continuar tus estudios en enseñanza media.
+      </p>
+
+      <div class="info-grid">
+
+        <div class="info-bloque">
+          <h3>🔬 Área Científico Humanista</h3>
+          <p>
+            Considera intereses relacionados con las ciencias, la investigación,
+            la lectura, el análisis, la reflexión y la profundización de conocimientos.
+          </p>
+        </div>
+
+        <div class="info-bloque">
+          <h3>🛠️ Área Técnico Profesional</h3>
+          <p>
+            Considera intereses relacionados con actividades prácticas,
+            tecnología, especialidades técnicas, emprendimiento y preparación para el mundo laboral.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="pasos-test">
+
+        <h3>¿Cómo responder?</h3>
+
+        <ol>
+          <li>Completa tus datos personales.</li>
+          <li>Lee cada afirmación cuidadosamente.</li>
+          <li>Responde según tus gustos e intereses.</li>
+          <li>No existen respuestas correctas o incorrectas.</li>
+          <li>Al finalizar conocerás tu tendencia vocacional.</li>
+          <li>Podrás indicar hasta 3 liceos de tu interés o señalar que aún no tienes una preferencia definida.</li>
+        </ol>
+
+      </div>
+
+    </section>
 
     <section class="avance-card">
       <div class="avance-texto">
@@ -54,8 +100,8 @@
 
         <label>Establecimiento</label>
         <select id="establecimiento" required>
-     <option>ESCUELA JUAN LUIS SANFUENTES</option>
-          <option>ESCUELA JOSE MANUEL BALMACEDA Y FERNANDEZ</option>
+          <option value="">Seleccione establecimiento</option>
+        <option>ESCUELA JOSE MANUEL BALMACEDA Y FERNANDEZ</option>
           <option>ESCUELA PROSPERIDAD</option>
           <option>ESCUELA CARLOS SPANO</option>
           <option>ESCUELA LAS ARAUCARIAS</option>
@@ -91,7 +137,7 @@
           <input
             type="text"
             id="establecimientoOtro"
-            placeholder="Ej: Colegio Juan Ignacio Molina"
+            placeholder="Ej: Colegio Particular..."
             autocomplete="off"
           >
         </div>
@@ -119,23 +165,29 @@
 
     </form>
 
-    <section id="seleccionLiceos" class="card oculto">
-      <h2>Elige hasta 3 liceos de tu preferencia</h2>
-      <p class="descripcion-area">
-        Selecciona los liceos que más te interesan. Puedes elegir mínimo 1 y máximo 3 opciones.
-      </p>
+  </div>
 
-      <div id="listaLiceos" class="lista-liceos"></div>
+  <div id="modalResultado" class="modal oculto">
+    <div class="modal-contenido">
+      <button type="button" class="modal-cerrar" id="btnCerrarModal">×</button>
 
-      <p id="mensajeLiceos" class="mensaje-error"></p>
+      <div id="modalResumenResultado"></div>
 
-      <button type="button" id="btnGuardarPreferencias">
-        Guardar preferencias y descargar resultado
-      </button>
-    </section>
+      <div class="modal-seleccion">
+        <h2>Elige hasta 3 liceos de tu preferencia</h2>
+        <p class="descripcion-area">
+          Selecciona los liceos que más te interesan según tu resultado vocacional.
+        </p>
 
-    <section id="resultado" class="resultado oculto"></section>
+        <div id="listaLiceos" class="lista-liceos"></div>
 
+        <p id="mensajeLiceos" class="mensaje-error"></p>
+
+        <button type="button" id="btnGuardarPreferencias">
+          Guardar preferencias y descargar PDF
+        </button>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -6,6 +6,8 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let respuestasGlobales = [];
 
+const OPCION_SIN_PREFERENCIA = "SIN PREFERENCIA DEFINIDA";
+
 const establecimientos = [
   "ESCUELA HERMANO GUIDO GOOSSENS",
   "ESCUELA JUAN LUIS SANFUENTES",
@@ -52,6 +54,10 @@ function obtenerRutaInsignia(nombre) {
 }
 
 function crearImagenInsignia(nombre, clase = "insignia-card") {
+  if (nombre === OPCION_SIN_PREFERENCIA) {
+    return "";
+  }
+
   return `
     <img
       class="${clase}"
@@ -64,6 +70,18 @@ function crearImagenInsignia(nombre, clase = "insignia-card") {
 
 function esOtroEstablecimiento(r) {
   return r.tipo_establecimiento === "OTRO";
+}
+
+function ordenarLiceosRanking(liceos, resumen) {
+  return liceos.sort((a, b) => {
+    const esSinPrefA = a === OPCION_SIN_PREFERENCIA;
+    const esSinPrefB = b === OPCION_SIN_PREFERENCIA;
+
+    if (esSinPrefA && !esSinPrefB) return 1;
+    if (!esSinPrefA && esSinPrefB) return -1;
+
+    return resumen[b].total - resumen[a].total;
+  });
 }
 
 async function login() {
@@ -138,8 +156,13 @@ function crearCardsEstablecimientos(data) {
     let tp = 0;
 
     if (total > 0) {
-      ch = Math.round(respuestas.reduce((sum, r) => sum + r.porcentaje_ch, 0) / total);
-      tp = Math.round(respuestas.reduce((sum, r) => sum + r.porcentaje_tp, 0) / total);
+      ch = Math.round(
+        respuestas.reduce((sum, r) => sum + r.porcentaje_ch, 0) / total
+      );
+
+      tp = Math.round(
+        respuestas.reduce((sum, r) => sum + r.porcentaje_tp, 0) / total
+      );
     }
 
     let tendencia = "Sin respuestas";
@@ -193,6 +216,72 @@ function crearCardsEstablecimientos(data) {
 
     contenedor.appendChild(card);
   });
+
+  const respuestasOtros = data.filter(esOtroEstablecimiento);
+  const totalOtros = respuestasOtros.length;
+
+  let chOtros = 0;
+  let tpOtros = 0;
+
+  if (totalOtros > 0) {
+    chOtros = Math.round(
+      respuestasOtros.reduce((sum, r) => sum + r.porcentaje_ch, 0) / totalOtros
+    );
+
+    tpOtros = Math.round(
+      respuestasOtros.reduce((sum, r) => sum + r.porcentaje_tp, 0) / totalOtros
+    );
+  }
+
+  let tendenciaOtros = "Sin respuestas";
+  let claseOtros = "equilibrada";
+
+  if (totalOtros > 0) {
+    if (chOtros > tpOtros) {
+      tendenciaOtros = "Científico Humanista";
+      claseOtros = "ch";
+    } else if (tpOtros > chOtros) {
+      tendenciaOtros = "Técnico Profesional";
+      claseOtros = "tp";
+    } else {
+      tendenciaOtros = "Equilibrada";
+      claseOtros = "equilibrada";
+    }
+  }
+
+  const cardOtros = document.createElement("div");
+  cardOtros.className = "establecimiento-card";
+  cardOtros.onclick = () => verOtrosEstablecimientos();
+
+  cardOtros.innerHTML = `
+    <div class="card-header-establecimiento">
+      <h3>OTROS ESTABLECIMIENTOS</h3>
+    </div>
+
+    <p class="cantidad-respuestas">${totalOtros} respuestas</p>
+
+    <div class="mini-barra-label">
+      <span>Científico Humanista</span>
+      <strong>${chOtros}%</strong>
+    </div>
+
+    <div class="mini-barra">
+      <div class="mini-progreso ch-barra" style="width:${chOtros}%"></div>
+    </div>
+
+    <div class="mini-barra-label">
+      <span>Técnico Profesional</span>
+      <strong>${tpOtros}%</strong>
+    </div>
+
+    <div class="mini-barra">
+      <div class="mini-progreso tp-barra" style="width:${tpOtros}%"></div>
+    </div>
+
+    <p class="badge ${claseOtros}">${tendenciaOtros}</p>
+  `;
+
+  contenedor.appendChild(cardOtros);
 }
 
 function obtenerResumenPreferencias(data) {
@@ -245,26 +334,29 @@ function crearTablaPreferenciasLiceos(data) {
     return;
   }
 
-  liceos
-    .sort((a, b) => resumen[b].total - resumen[a].total)
-    .forEach(liceo => {
-      const r = resumen[liceo];
+  ordenarLiceosRanking(liceos, resumen).forEach(liceo => {
+    const r = resumen[liceo];
 
-      tbody.innerHTML += `
-        <tr>
-          <td>
-            <div class="card-header-establecimiento">
-              ${crearImagenInsignia(liceo, "insignia-card")}
-              <strong>${liceo}</strong>
-            </div>
-          </td>
-          <td>${r.total}</td>
-          <td>${r.primera}</td>
-          <td>${r.segunda}</td>
-          <td>${r.tercera}</td>
-        </tr>
-      `;
-    });
+    const etiquetaLiceo =
+      liceo === OPCION_SIN_PREFERENCIA
+        ? `<strong>${liceo}</strong>`
+        : `
+          <div class="card-header-establecimiento">
+            ${crearImagenInsignia(liceo, "insignia-card")}
+            <strong>${liceo}</strong>
+          </div>
+        `;
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${etiquetaLiceo}</td>
+        <td>${r.total}</td>
+        <td>${r.primera}</td>
+        <td>${r.segunda}</td>
+        <td>${r.tercera}</td>
+      </tr>
+    `;
+  });
 }
 
 function crearCardEstudiante(r) {
@@ -399,7 +491,7 @@ function verOtrosEstablecimientos() {
 
   document.getElementById("tituloDetalle").innerHTML = `
     <div class="card-header-establecimiento">
-      <span>Otros establecimientos</span>
+      <span>OTROS ESTABLECIMIENTOS</span>
     </div>
   `;
 
@@ -435,6 +527,17 @@ function crearPreferenciaAdmin(liceo, etiqueta) {
       <div class="preferencia-admin-item">
         <span>${etiqueta}</span>
         <strong>-</strong>
+      </div>
+    `;
+  }
+
+  if (liceo === OPCION_SIN_PREFERENCIA) {
+    return `
+      <div class="preferencia-admin-item">
+        <div>
+          <span>${etiqueta}</span>
+          <strong>${OPCION_SIN_PREFERENCIA}</strong>
+        </div>
       </div>
     `;
   }
@@ -542,8 +645,7 @@ function descargarPDFComunal() {
   y += 9;
 
   const resumenPreferencias = obtenerResumenPreferencias(respuestasGlobales);
-  const liceos = Object.keys(resumenPreferencias)
-    .sort((a, b) => resumenPreferencias[b].total - resumenPreferencias[a].total);
+  const liceos = ordenarLiceosRanking(Object.keys(resumenPreferencias), resumenPreferencias);
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -637,4 +739,65 @@ function descargarPDFComunal() {
   });
 
   doc.save(`informe-comunal-test-vocacional-${fecha.replaceAll("/", "-")}.pdf`);
+}
+
+function limpiarTextoExcel(valor) {
+  if (valor === null || valor === undefined) return "";
+  return String(valor).replace(/"/g, '""');
+}
+
+function descargarExcelRespuestas() {
+  if (!respuestasGlobales || respuestasGlobales.length === 0) {
+    alert("Aún no hay respuestas para descargar.");
+    return;
+  }
+
+  const encabezados = [
+    "Nombre estudiante",
+    "RUT",
+    "Establecimiento",
+    "Tendencia",
+    "Preferencia 1",
+    "Preferencia 2",
+    "Preferencia 3"
+  ];
+
+  const filas = respuestasGlobales.map(r => [
+    r.nombre || "",
+    r.rut || "",
+    r.establecimiento || "",
+    r.tendencia || "",
+    r.preferencia_1 || "",
+    r.preferencia_2 || "",
+    r.preferencia_3 || ""
+  ]);
+
+  const contenidoCSV = [
+    encabezados,
+    ...filas
+  ]
+    .map(fila =>
+      fila
+        .map(celda => `"${limpiarTextoExcel(celda)}"`)
+        .join(";")
+    )
+    .join("\n");
+
+  const blob = new Blob(
+    ["\uFEFF" + contenidoCSV],
+    {
+      type: "text/csv;charset=utf-8;"
+    }
+  );
+
+  const fecha = new Date()
+    .toLocaleDateString("es-CL")
+    .replaceAll("/", "-");
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `respuestas-test-vocacional-${fecha}.csv`;
+  link.click();
+
+  URL.revokeObjectURL(link.href);
 }

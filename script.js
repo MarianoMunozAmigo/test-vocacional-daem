@@ -44,13 +44,17 @@ const liceosDisponibles = [
   "LICEO MARTA DONOSO ESPEJO",
   "LICEO CARLOS CONDELL",
   "LICEO ABATE MOLINA",
-  "LICEO TECNICO-PROFESIONAL EL SAUCE",
+  "LICEO EL SAUCE",
   "LICEO COMPLEJO EDUCACIONAL JAVIERA CARRERA",
   "LICEO BICENTENARIO ORIENTE DE TALCA",
   "LICEO INDUSTRIAL",
   "LICEO AMELIA COURBIS",
-  "INSTITUTO SUPERIOR DE COMERCIO"
+  "INSTITUTO SUPERIOR DE COMERCIO",
+  "LICEO HECTOR PEREZ BIOTT",
+  "LICEO BICENTENARIO DIEGO PORTALES"
 ];
+
+const OPCION_SIN_PREFERENCIA = "SIN PREFERENCIA DEFINIDA";
 
 let resultadoPendiente = null;
 
@@ -249,17 +253,62 @@ function crearListaLiceos() {
     contenedor.appendChild(label);
   });
 
+  const labelSinPreferencia = document.createElement("label");
+  labelSinPreferencia.className = "liceo-opcion opcion-sin-preferencia";
+
+  labelSinPreferencia.innerHTML = `
+    <input type="checkbox" id="sinPreferenciaLiceos" value="${OPCION_SIN_PREFERENCIA}">
+    <span>No tengo interés en estos liceos / Aún no estoy seguro</span>
+  `;
+
+  contenedor.appendChild(labelSinPreferencia);
+
   document.querySelectorAll('input[name="liceosPreferencia"]').forEach(check => {
-    check.addEventListener("change", validarSeleccionLiceos);
+    check.addEventListener("change", function () {
+      const sinPreferencia = document.getElementById("sinPreferenciaLiceos");
+
+      if (sinPreferencia && this.checked) {
+        sinPreferencia.checked = false;
+      }
+
+      validarSeleccionLiceos.call(this);
+    });
+  });
+
+  document.getElementById("sinPreferenciaLiceos").addEventListener("change", function () {
+    const checksLiceos = document.querySelectorAll('input[name="liceosPreferencia"]');
+
+    if (this.checked) {
+      checksLiceos.forEach(check => {
+        check.checked = false;
+      });
+    }
+
+    validarSeleccionLiceos.call(this);
   });
 }
 
 function validarSeleccionLiceos() {
   const seleccionados = document.querySelectorAll('input[name="liceosPreferencia"]:checked');
+  const sinPreferencia = document.getElementById("sinPreferenciaLiceos");
   const mensaje = document.getElementById("mensajeLiceos");
 
+  if (sinPreferencia && sinPreferencia.checked) {
+    mensaje.textContent = "";
+
+    document.querySelectorAll(".liceo-opcion").forEach(label => {
+      const input = label.querySelector("input");
+      label.classList.toggle("seleccionado", input.checked);
+    });
+
+    return;
+  }
+
   if (seleccionados.length > 3) {
-    this.checked = false;
+    if (this && this.type === "checkbox") {
+      this.checked = false;
+    }
+
     mensaje.textContent = "Puedes seleccionar un máximo de 3 liceos.";
   } else {
     mensaje.textContent = "";
@@ -272,9 +321,19 @@ function validarSeleccionLiceos() {
 }
 
 function obtenerLiceosSeleccionados() {
+  const sinPreferencia = document.getElementById("sinPreferenciaLiceos");
+
+  if (sinPreferencia && sinPreferencia.checked) {
+    return [OPCION_SIN_PREFERENCIA];
+  }
+
   return Array.from(
     document.querySelectorAll('input[name="liceosPreferencia"]:checked')
   ).map(input => input.value);
+}
+
+function cerrarModalResultado() {
+  document.getElementById("modalResultado").classList.add("oculto");
 }
 
 async function generarPDFResultado(
@@ -289,10 +348,14 @@ async function generarPDFResultado(
 ) {
   try {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "letter"
+    });
 
     const fecha = new Date().toLocaleDateString("es-CL");
-
     const logoBase64 = await obtenerLogoBase64();
 
     let insigniaEstablecimiento = null;
@@ -303,104 +366,174 @@ async function generarPDFResultado(
       );
     }
 
-    if (logoBase64) {
-      try {
-        doc.addImage(logoBase64, "PNG", 15, 10, 36, 20);
-      } catch (logoError) {
-        console.error("Error agregando logo al PDF:", logoError);
+    function encabezadoPDF() {
+      if (logoBase64) {
+        try {
+          doc.addImage(logoBase64, "PNG", 15, 10, 26, 14);
+        } catch (logoError) {
+          console.error("Error agregando logo al PDF:", logoError);
+        }
       }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(17);
+      doc.text("Resultado Test Vocacional", 15, 34);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text("Enseñanza Media - DAEM Talca", 15, 41);
+
+      doc.line(15, 48, 200, 48);
     }
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("Resultado Test Vocacional", 20, 42);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-    doc.text("Enseñanza Media - DAEM Talca", 20, 51);
-
-    doc.line(20, 60, 190, 60);
+    encabezadoPDF();
 
     if (insigniaEstablecimiento) {
       try {
-        doc.addImage(insigniaEstablecimiento, "JPEG", 155, 70, 24, 24);
+        doc.addImage(insigniaEstablecimiento, "JPEG", 172, 58, 22, 22);
       } catch (errorInsigniaEst) {
         console.error("Error agregando insignia del establecimiento:", errorInsigniaEst);
       }
     }
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("Datos del estudiante", 20, 75);
+    doc.setFontSize(13);
+    doc.text("Datos del estudiante", 15, 62);
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-    doc.text(`Nombre: ${nombre}`, 20, 87);
-    doc.text(`RUT: ${rut}`, 20, 97);
+    doc.setFontSize(10.5);
+
+    doc.text(`Nombre: ${nombre}`, 15, 74);
+    doc.text(`RUT: ${rut}`, 15, 82);
 
     const textoEstablecimiento =
       tipoEstablecimiento === "OTRO"
         ? `Establecimiento externo: ${establecimiento}`
         : `Establecimiento: ${establecimiento}`;
 
-    const establecimientoLineas = doc.splitTextToSize(textoEstablecimiento, 125);
-    doc.text(establecimientoLineas, 20, 107);
-    doc.text(`Fecha: ${fecha}`, 20, 123);
+    const establecimientoLineas = doc.splitTextToSize(textoEstablecimiento, 145);
+    doc.text(establecimientoLineas, 15, 90);
+
+    doc.text(`Fecha: ${fecha}`, 15, 106);
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("Resultados", 20, 142);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-    doc.text(`Científico Humanista: ${porcentajeCH}%`, 20, 156);
-    doc.text(`Técnico Profesional: ${porcentajeTP}%`, 20, 166);
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(15);
-    doc.text(`Tendencia predominante: ${tendencia}`, 20, 186);
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("Liceos de preferencia", 20, 204);
+    doc.setFontSize(13);
+    doc.text("Resultados", 15, 124);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
 
-    let yPreferencias = 218;
+    doc.text(`Científico Humanista: ${porcentajeCH}%`, 15, 137);
+    doc.text(`Técnico Profesional: ${porcentajeTP}%`, 15, 147);
+
+    doc.setDrawColor(179, 0, 0);
+    doc.setFillColor(255, 240, 240);
+    doc.roundedRect(15, 160, 185, 22, 4, 4, "FD");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(179, 0, 0);
+    doc.text(`Tendencia predominante: ${tendencia}`, 22, 174);
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+
+    const textoBreve =
+      "Este resultado permite orientar la conversación familiar y escolar sobre las alternativas de continuidad en enseñanza media.";
+
+    const textoBreveLineas = doc.splitTextToSize(textoBreve, 180);
+    doc.text(textoBreveLineas, 15, 198);
+
+    doc.setFontSize(9);
+    doc.setTextColor(90, 90, 90);
+    doc.text("Página 1 de 2", 170, 255);
+    doc.setTextColor(0, 0, 0);
+
+    doc.addPage();
+
+    encabezadoPDF();
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Liceos de preferencia seleccionados", 15, 62);
+
+    let yPreferencias = 76;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10.5);
 
     for (let i = 0; i < preferencias.length; i++) {
       const liceo = preferencias[i];
-      const insigniaLiceo = await obtenerImagenBase64(obtenerRutaInsignia(liceo));
 
-      if (insigniaLiceo) {
-        try {
-          doc.addImage(insigniaLiceo, "JPEG", 20, yPreferencias - 7, 12, 12);
-        } catch (errorInsigniaLiceo) {
-          console.error("Error agregando insignia del liceo:", errorInsigniaLiceo);
+      if (liceo !== OPCION_SIN_PREFERENCIA) {
+        const insigniaLiceo = await obtenerImagenBase64(obtenerRutaInsignia(liceo));
+
+        if (insigniaLiceo) {
+          try {
+            doc.addImage(insigniaLiceo, "JPEG", 15, yPreferencias - 7, 12, 12);
+          } catch (errorInsigniaLiceo) {
+            console.error("Error agregando insignia del liceo:", errorInsigniaLiceo);
+          }
         }
       }
 
-      const lineasLiceo = doc.splitTextToSize(`${i + 1}. ${liceo}`, 145);
-      doc.text(lineasLiceo, 36, yPreferencias);
+      const textoPreferencia =
+        liceo === OPCION_SIN_PREFERENCIA
+          ? "El estudiante indicó que no tiene interés en estos liceos o aún no está seguro."
+          : `${i + 1}. ${liceo}`;
 
-      yPreferencias += 14;
+      doc.setFont("helvetica", liceo === OPCION_SIN_PREFERENCIA ? "bold" : "normal");
+
+      const xTexto = liceo === OPCION_SIN_PREFERENCIA ? 15 : 40;
+      const anchoTexto = liceo === OPCION_SIN_PREFERENCIA ? 180 : 155;
+
+      const lineas = doc.splitTextToSize(textoPreferencia, anchoTexto);
+      doc.text(lineas, xTexto, yPreferencias);
+
+      yPreferencias += Math.max(18, lineas.length * 6 + 10);
     }
+
+    doc.setDrawColor(230, 230, 230);
+    doc.line(15, yPreferencias + 4, 200, yPreferencias + 4);
+
+    let yTexto = yPreferencias + 20;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Orientación del resultado", 15, yTexto);
+
+    yTexto += 10;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
 
     const textoOrientacion =
       "Este resultado es referencial y tiene como finalidad apoyar el proceso de orientación vocacional del estudiante. No constituye una decisión definitiva, sino una herramienta de apoyo para conversar con la familia, el establecimiento y los equipos de orientación.";
 
-    const lineas = doc.splitTextToSize(textoOrientacion, 170);
-    doc.text(lineas, 20, 250);
+    const lineasOrientacion = doc.splitTextToSize(textoOrientacion, 180);
+    doc.text(lineasOrientacion, 15, yTexto);
 
-    doc.line(20, 268, 190, 268);
+    yTexto += lineasOrientacion.length * 5 + 12;
 
-    doc.setFontSize(10);
+    const textoCierre =
+      "Se recomienda revisar este resultado considerando los intereses personales, habilidades, trayectoria escolar y oferta educativa disponible.";
+
+    const lineasCierre = doc.splitTextToSize(textoCierre, 180);
+    doc.text(lineasCierre, 15, yTexto);
+
+    doc.line(15, 242, 200, 242);
+
+    doc.setFontSize(9);
+    doc.setTextColor(90, 90, 90);
     doc.text(
       "Departamento de Administración de Educación Municipal - Talca",
-      20,
-      278
+      15,
+      250
     );
+    doc.text("Página 2 de 2", 170, 255);
+
+    doc.setTextColor(0, 0, 0);
 
     const nombreArchivo = `resultado-test-vocacional-${rut}.pdf`;
 
@@ -411,61 +544,55 @@ async function generarPDFResultado(
   }
 }
 
-function mostrarResumenTemporal(datos) {
-  const resultado = document.getElementById("resultado");
+function abrirModalResultado(datos) {
+  const modal = document.getElementById("modalResultado");
+  const resumen = document.getElementById("modalResumenResultado");
 
   const bloqueEstablecimiento =
     datos.tipoEstablecimiento === "OTRO"
       ? `
-        <div class="establecimiento-preview">
+        <div class="modal-resumen-header">
           <div>
-            <span>Establecimiento externo</span><br>
-            <strong>${datos.establecimiento}</strong>
+            <h2>Resultado del Test Vocacional</h2>
+            <p><strong>Estudiante:</strong> ${datos.nombre}</p>
+            <p><strong>RUT:</strong> ${datos.rut}</p>
+            <p><strong>Establecimiento externo:</strong> ${datos.establecimiento}</p>
           </div>
         </div>
       `
       : `
-        <div class="establecimiento-preview">
+        <div class="modal-resumen-header">
           ${crearImagenInsignia(datos.establecimiento, "insignia-liceo")}
           <div>
-            <span>Establecimiento</span><br>
-            <strong>${datos.establecimiento}</strong>
+            <h2>Resultado del Test Vocacional</h2>
+            <p><strong>Estudiante:</strong> ${datos.nombre}</p>
+            <p><strong>RUT:</strong> ${datos.rut}</p>
+            <p><strong>Establecimiento:</strong> ${datos.establecimiento}</p>
           </div>
         </div>
       `;
 
-  resultado.innerHTML = `
-    <h2>Resultado del Test Vocacional</h2>
-
-    <p><strong>Estudiante:</strong> ${datos.nombre}</p>
-    <p><strong>RUT:</strong> ${datos.rut}</p>
-
+  resumen.innerHTML = `
     ${bloqueEstablecimiento}
 
-    <h3>Científico Humanista</h3>
-    <div class="barra">
-      <div class="progreso" style="width: ${datos.porcentajeCH}%;">
-        ${datos.porcentajeCH}%
+    <div class="modal-resultados-grid">
+      <div class="modal-resultado-card">
+        <span>Científico Humanista</span>
+        <strong>${datos.porcentajeCH}%</strong>
       </div>
-    </div>
 
-    <h3>Técnico Profesional</h3>
-    <div class="barra">
-      <div class="progreso" style="width: ${datos.porcentajeTP}%;">
-        ${datos.porcentajeTP}%
+      <div class="modal-resultado-card">
+        <span>Técnico Profesional</span>
+        <strong>${datos.porcentajeTP}%</strong>
       </div>
     </div>
 
     <p class="tendencia">
       Tendencia predominante: ${datos.tendencia}
     </p>
-
-    <p>
-      Ahora selecciona hasta 3 liceos de tu preferencia para guardar tu respuesta y descargar el PDF.
-    </p>
   `;
 
-  resultado.classList.remove("oculto");
+  modal.classList.remove("oculto");
 }
 
 crearPreguntas(preguntasCH, "preguntasCH", "ch");
@@ -585,13 +712,7 @@ document.getElementById("formTest").addEventListener("submit", async function(ev
     tendencia
   };
 
-  mostrarResumenTemporal(resultadoPendiente);
-
-  document.getElementById("seleccionLiceos").classList.remove("oculto");
-
-  document.getElementById("seleccionLiceos").scrollIntoView({
-    behavior: "smooth"
-  });
+  abrirModalResultado(resultadoPendiente);
 });
 
 document.getElementById("btnGuardarPreferencias").addEventListener("click", async function() {
@@ -604,11 +725,12 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
   }
 
   if (preferencias.length === 0) {
-    mensaje.textContent = "Debes seleccionar al menos 1 liceo.";
+    mensaje.textContent =
+      "Debes seleccionar al menos 1 liceo o marcar la opción 'No tengo interés en estos liceos / Aún no estoy seguro'.";
     return;
   }
 
-  if (preferencias.length > 3) {
+  if (preferencias.length > 3 && preferencias[0] !== OPCION_SIN_PREFERENCIA) {
     mensaje.textContent = "Puedes seleccionar un máximo de 3 liceos.";
     return;
   }
@@ -650,40 +772,6 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
     return;
   }
 
-  const resultado = document.getElementById("resultado");
-
-  resultado.innerHTML += `
-    <div class="liceos-elegidos">
-      <h3>Liceos seleccionados</h3>
-      <ol>
-        ${preferencias.map(liceo => `
-          <li>
-            <div class="establecimiento-preview">
-              ${crearImagenInsignia(liceo, "insignia-liceo")}
-              <strong>${liceo}</strong>
-            </div>
-          </li>
-        `).join("")}
-      </ol>
-    </div>
-
-    <button
-      type="button"
-      onclick="generarPDFResultado(
-        '${resultadoPendiente.nombre.replace(/'/g, "\\'")}',
-        '${resultadoPendiente.rut}',
-        '${resultadoPendiente.establecimiento.replace(/'/g, "\\'")}',
-        ${resultadoPendiente.porcentajeCH},
-        ${resultadoPendiente.porcentajeTP},
-        '${resultadoPendiente.tendencia}',
-        ${JSON.stringify(preferencias).replace(/"/g, "&quot;")},
-        '${resultadoPendiente.tipoEstablecimiento}'
-      )"
-    >
-      Descargar resultado en PDF
-    </button>
-  `;
-
   await generarPDFResultado(
     resultadoPendiente.nombre,
     resultadoPendiente.rut,
@@ -696,7 +784,6 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
   );
 
   document.getElementById("formTest").reset();
-  document.getElementById("seleccionLiceos").classList.add("oculto");
   document.getElementById("campoOtroEstablecimiento").classList.add("oculto");
   document.getElementById("establecimientoOtro").required = false;
   document.getElementById("establecimientoOtro").value = "";
@@ -706,6 +793,12 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
   document.querySelectorAll('input[name="liceosPreferencia"]').forEach(check => {
     check.checked = false;
   });
+
+  const sinPreferencia = document.getElementById("sinPreferenciaLiceos");
+
+  if (sinPreferencia) {
+    sinPreferencia.checked = false;
+  }
 
   document.querySelectorAll(".liceo-opcion").forEach(label => {
     label.classList.remove("seleccionado");
@@ -718,8 +811,15 @@ document.getElementById("btnGuardarPreferencias").addEventListener("click", asyn
   resultadoPendiente = null;
 
   actualizarAvance();
+  cerrarModalResultado();
 
-  resultado.scrollIntoView({
-    behavior: "smooth"
-  });
+  alert("Tu respuesta fue guardada correctamente. Se descargó tu PDF de resultado.");
+});
+
+document.getElementById("btnCerrarModal").addEventListener("click", cerrarModalResultado);
+
+document.getElementById("modalResultado").addEventListener("click", function(event) {
+  if (event.target.id === "modalResultado") {
+    cerrarModalResultado();
+  }
 });
