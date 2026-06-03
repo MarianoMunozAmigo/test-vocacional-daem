@@ -150,7 +150,7 @@ function crearPreguntas(lista, contenedorId, prefijo) {
 }
 
 function validarRutFormato(rut) {
-  return /^[0-9]{7,8}-[0-9K]$/.test(rut);
+  return /^[0-9]{7,9}-[0-9K]$/i.test(rut);
 }
 
 async function verificarRutYaRespondio(rut) {
@@ -664,7 +664,7 @@ rutInput.addEventListener("blur", async function () {
 
   if (!validarRutFormato(rut)) {
     mensajeRut.textContent =
-      "El RUT debe ingresarse sin puntos y con guion. Ejemplo: 12345678-9";
+      "El RUT debe ingresarse sin puntos y con guion. Ejemplo: 12345678-9 o 100512993-8";
 
     rutInput.classList.add("input-error");
     return;
