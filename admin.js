@@ -5,6 +5,7 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let respuestasGlobales = [];
+let vistaDetalleActual = null;
 
 const OPCION_SIN_PREFERENCIA = "SIN PREFERENCIA DEFINIDA";
 
@@ -38,8 +39,18 @@ const establecimientos = [
   "ESCUELA PUERTAS NEGRAS",
   "ESCUELA EL ORIENTE",
   "ESCUELA VILLA CULENAR",
-  "ESCUELA CARLOS TRUPP WANNER",
+  "ESCUELA CARLOS TRUPP WANNER"
 ];
+
+function normalizarTexto(texto) {
+  return String(texto || "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/Ñ/g, "N")
+    .replace(/\s+/g, " ");
+}
 
 function obtenerRutaInsignia(nombre) {
   return "/images/insignias/" +
@@ -147,7 +158,9 @@ function crearCardsEstablecimientos(data) {
 
   establecimientos.forEach(est => {
     const respuestas = data.filter(
-      r => r.establecimiento === est && !esOtroEstablecimiento(r)
+      r =>
+        normalizarTexto(r.establecimiento) === normalizarTexto(est) &&
+        !esOtroEstablecimiento(r)
     );
 
     const total = respuestas.length;
@@ -359,6 +372,48 @@ function crearTablaPreferenciasLiceos(data) {
   });
 }
 
+function crearOpcionesTraslado(establecimientoActual) {
+  return establecimientos.map(est => {
+    const seleccionado =
+      normalizarTexto(est) === normalizarTexto(establecimientoActual)
+        ? "selected"
+        : "";
+
+    return `<option value="${est}" ${seleccionado}>${est}</option>`;
+  }).join("");
+}
+
+function crearBotonTraslado(r) {
+  return `
+    <div class="traslado-admin">
+      <button
+        type="button"
+        class="btn-trasladar"
+        onclick="mostrarTrasladoRespuesta('${r.id}')"
+      >
+        Trasladar respuesta
+      </button>
+
+      <div id="traslado-${r.id}" class="traslado-panel oculto">
+        <label>Trasladar a establecimiento DAEM</label>
+
+        <select id="selectTraslado-${r.id}">
+          <option value="">Seleccione establecimiento</option>
+          ${crearOpcionesTraslado(r.establecimiento)}
+        </select>
+
+        <button
+          type="button"
+          class="btn-guardar-traslado"
+          onclick="guardarTrasladoRespuesta('${r.id}')"
+        >
+          Guardar traslado
+        </button>
+      </div>
+    </div>
+  `;
+}
+
 function crearCardEstudiante(r) {
   const fecha = r.fecha
     ? new Date(r.fecha).toLocaleDateString("es-CL")
@@ -417,14 +472,69 @@ function crearCardEstudiante(r) {
       ${crearPreferenciaAdmin(r.preferencia_2, "2ª preferencia")}
       ${crearPreferenciaAdmin(r.preferencia_3, "3ª preferencia")}
     </div>
+
+    ${crearBotonTraslado(r)}
   `;
 
   return card;
 }
 
+function mostrarTrasladoRespuesta(id) {
+  const panel = document.getElementById(`traslado-${id}`);
+
+  if (!panel) return;
+
+  panel.classList.toggle("oculto");
+}
+
+async function guardarTrasladoRespuesta(id) {
+  const select = document.getElementById(`selectTraslado-${id}`);
+
+  if (!select || !select.value) {
+    alert("Debes seleccionar un establecimiento.");
+    return;
+  }
+
+  const nuevoEstablecimiento = select.value;
+
+  const confirmar = confirm(
+    `¿Confirmas que deseas trasladar esta respuesta a:\n\n${nuevoEstablecimiento}?`
+  );
+
+  if (!confirmar) return;
+
+  const { error } = await supabaseClient
+    .from("respuestas_test_vocacional")
+    .update({
+      establecimiento: nuevoEstablecimiento,
+      tipo_establecimiento: "DAEM"
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error trasladando respuesta:", error);
+    alert("No se pudo trasladar la respuesta. Revisa la política UPDATE en Supabase.");
+    return;
+  }
+
+  alert("Respuesta trasladada correctamente.");
+
+  await cargarResultados();
+
+  if (vistaDetalleActual === "OTROS") {
+    verOtrosEstablecimientos();
+  } else if (vistaDetalleActual) {
+    verDetalleEstablecimiento(vistaDetalleActual);
+  }
+}
+
 function verDetalleEstablecimiento(establecimiento) {
+  vistaDetalleActual = establecimiento;
+
   const respuestas = respuestasGlobales.filter(
-    r => r.establecimiento === establecimiento && !esOtroEstablecimiento(r)
+    r =>
+      normalizarTexto(r.establecimiento) === normalizarTexto(establecimiento) &&
+      !esOtroEstablecimiento(r)
   );
 
   const total = respuestas.length;
@@ -474,6 +584,8 @@ function verDetalleEstablecimiento(establecimiento) {
 }
 
 function verOtrosEstablecimientos() {
+  vistaDetalleActual = "OTROS";
+
   const respuestas = respuestasGlobales.filter(esOtroEstablecimiento);
 
   const total = respuestas.length;
@@ -554,6 +666,8 @@ function crearPreferenciaAdmin(liceo, etiqueta) {
 }
 
 function volverPanel() {
+  vistaDetalleActual = null;
+
   document.getElementById("detalleEstablecimiento").classList.add("oculto");
   document.getElementById("panel").classList.remove("oculto");
 

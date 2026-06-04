@@ -960,3 +960,36 @@ tr:nth-child(even) {
 .liceo-opcion strong {
   color: #222;
 }
+.traslado-admin {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #eee;
+}
+
+.btn-trasladar {
+  width: auto;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #333;
+  color: white;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+.traslado-panel {
+  margin-top: 12px;
+  background: #f8f8f8;
+  padding: 14px;
+  border-radius: 14px;
+}
+
+.traslado-panel label {
+  margin-top: 0;
+}
+
+.btn-guardar-traslado {
+  margin-top: 10px;
+  padding: 12px;
+  font-size: 14px;
+  border-radius: 12px;
+}
