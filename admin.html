@@ -37,25 +37,15 @@
     <div class="encabezado-resumen">
       <h2>Resumen Comunal</h2>
 
-<div class="acciones-reporte">
+      <div class="acciones-reporte">
+        <button class="btn-icono btn-pdf" onclick="descargarPDFComunal()" title="Descargar Informe PDF">
+          <span>📄</span>
+        </button>
 
-  <button
-    class="btn-icono btn-pdf"
-    onclick="descargarPDFComunal()"
-    title="Descargar Informe PDF"
-  >
-    <span>📄</span>
-  </button>
-
-  <button
-    class="btn-icono btn-excel"
-    onclick="descargarExcelRespuestas()"
-    title="Exportar Excel"
-  >
-    <span>📊</span>
-  </button>
-
-</div>
+        <button class="btn-icono btn-excel" onclick="descargarExcelRespuestas()" title="Exportar Excel">
+          <span>📊</span>
+        </button>
+      </div>
     </div>
 
     <div class="resumen-grid">
@@ -82,6 +72,51 @@
 
     <h2>Tendencia por establecimiento DAEM</h2>
     <div id="cardsEstablecimientos" class="establecimientos-grid"></div>
+
+    <h2>Análisis de concordancia vocacional</h2>
+
+    <div class="analisis-concordancia">
+      <div class="resumen-card concordante">
+        <span>Concordancia general</span>
+        <strong id="concordanciaGeneral">0%</strong>
+      </div>
+      <div class="card-alerta-sin-preferencia" onclick="verSinPreferenciaPorEstablecimiento()">
+  <div>
+    <span>Estudiantes sin preferencia definida</span>
+    <strong id="cardSinPreferenciaTotal">0</strong>
+    <p>Ver detalle por establecimiento de origen</p>
+  </div>
+</div>
+
+      <div class="resumen-card">
+        <span>Estudiantes concordantes</span>
+        <strong id="totalConcordantes">0</strong>
+      </div>
+
+      <div class="resumen-card alerta">
+        <span>Estudiantes no concordantes</span>
+        <strong id="totalNoConcordantes">0</strong>
+      </div>
+
+      <div class="resumen-card neutro">
+        <span>Sin preferencia definida</span>
+        <strong id="totalSinPreferencia">0</strong>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Liceo elegido como 1ª preferencia</th>
+          <th>Tipo de oferta</th>
+          <th>Total estudiantes</th>
+          <th>Concordantes</th>
+          <th>No concordantes</th>
+          <th>% Concordancia</th>
+        </tr>
+      </thead>
+      <tbody id="tablaConcordancia"></tbody>
+    </table>
 
     <h2>Preferencias de liceos</h2>
 

@@ -1,13 +1,26 @@
 const SUPABASE_URL = "https://jxsgfytqlrhsodaoaogk.supabase.co";
 
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4c2dmeXRxbHJoc29kYW9hb2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NTM4MTQsImV4cCI6MjA5NTUyOTgxNH0.TuTdhInCKECsj0gHyUo1a2HEzwJK0OCJrlX5_EBlOP0";
-
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let respuestasGlobales = [];
 let vistaDetalleActual = null;
 
 const OPCION_SIN_PREFERENCIA = "SIN PREFERENCIA DEFINIDA";
+
+const tipoOfertaLiceos = {
+  "LICEO MARTA DONOSO ESPEJO": "CH",
+  "LICEO CARLOS CONDELL": "MIXTO",
+  "LICEO ABATE MOLINA": "CH",
+  "LICEO EL SAUCE": "TP",
+  "LICEO COMPLEJO EDUCACIONAL JAVIERA CARRERA": "TP",
+  "LICEO BICENTENARIO ORIENTE DE TALCA": "CH",
+  "LICEO INDUSTRIAL": "TP",
+  "LICEO AMELIA COURBIS": "TP",
+  "INSTITUTO SUPERIOR DE COMERCIO": "MIXTO",
+  "LICEO HECTOR PEREZ BIOTT": "CH",
+  "LICEO BICENTENARIO DIEGO PORTALES": "MIXTO"
+};
 
 const establecimientos = [
   "ESCUELA HERMANO GUIDO GOOSSENS",
@@ -65,7 +78,7 @@ function obtenerRutaInsignia(nombre) {
 }
 
 function crearImagenInsignia(nombre, clase = "insignia-card") {
-  if (nombre === OPCION_SIN_PREFERENCIA) {
+  if (!nombre || nombre === OPCION_SIN_PREFERENCIA) {
     return "";
   }
 
@@ -81,6 +94,42 @@ function crearImagenInsignia(nombre, clase = "insignia-card") {
 
 function esOtroEstablecimiento(r) {
   return r.tipo_establecimiento === "OTRO";
+}
+
+function obtenerTotalEstablecimiento(establecimiento) {
+  return respuestasGlobales.filter(r =>
+    normalizarTexto(r.establecimiento) === normalizarTexto(establecimiento)
+  ).length;
+}
+
+function obtenerEtiquetaOferta(tipo) {
+  if (tipo === "CH") return "Científico Humanista";
+  if (tipo === "TP") return "Técnico Profesional";
+  if (tipo === "MIXTO") return "Científico Humanista - Técnico Profesional";
+  return "Sin clasificación";
+}
+
+function obtenerTipoTendencia(tendencia) {
+  const texto = normalizarTexto(tendencia);
+
+  if (texto.includes("CIENTIFICO")) return "CH";
+  if (texto.includes("TECNICO")) return "TP";
+
+  return "EQUILIBRADA";
+}
+
+function esConcordante(tendencia, liceo) {
+  if (!liceo || liceo === OPCION_SIN_PREFERENCIA) return null;
+
+  const tipoTendencia = obtenerTipoTendencia(tendencia);
+  const tipoLiceo = tipoOfertaLiceos[liceo];
+
+  if (!tipoLiceo) return null;
+
+  if (tipoTendencia === "EQUILIBRADA") return true;
+  if (tipoLiceo === "MIXTO") return true;
+
+  return tipoTendencia === tipoLiceo;
 }
 
 function ordenarLiceosRanking(liceos, resumen) {
@@ -128,27 +177,29 @@ async function cargarResultados() {
     return;
   }
 
-  respuestasGlobales = data;
+  respuestasGlobales = data || [];
 
-  const total = data.length;
+  const total = respuestasGlobales.length;
 
   const promedioCH = total > 0
-    ? Math.round(data.reduce((sum, r) => sum + r.porcentaje_ch, 0) / total)
+    ? Math.round(respuestasGlobales.reduce((sum, r) => sum + r.porcentaje_ch, 0) / total)
     : 0;
 
   const promedioTP = total > 0
-    ? Math.round(data.reduce((sum, r) => sum + r.porcentaje_tp, 0) / total)
+    ? Math.round(respuestasGlobales.reduce((sum, r) => sum + r.porcentaje_tp, 0) / total)
     : 0;
 
-  const totalOtros = data.filter(esOtroEstablecimiento).length;
+  const totalOtros = respuestasGlobales.filter(esOtroEstablecimiento).length;
 
   document.getElementById("total").textContent = total;
   document.getElementById("promCH").textContent = promedioCH + "%";
   document.getElementById("promTP").textContent = promedioTP + "%";
   document.getElementById("totalOtros").textContent = totalOtros;
 
-  crearCardsEstablecimientos(data);
-  crearTablaPreferenciasLiceos(data);
+  crearCardsEstablecimientos(respuestasGlobales);
+  crearAnalisisConcordancia(respuestasGlobales);
+  crearCardSinPreferencia(respuestasGlobales);
+  crearTablaPreferenciasLiceos(respuestasGlobales);
 }
 
 function crearCardsEstablecimientos(data) {
@@ -295,6 +346,248 @@ function crearCardsEstablecimientos(data) {
   `;
 
   contenedor.appendChild(cardOtros);
+}
+
+function crearCardSinPreferencia(data) {
+  const total = data.filter(r =>
+    r.preferencia_1 === OPCION_SIN_PREFERENCIA
+  ).length;
+
+  const card = document.getElementById("cardSinPreferenciaTotal");
+
+  if (card) {
+    card.textContent = total;
+  }
+}
+
+function verSinPreferenciaPorEstablecimiento() {
+  vistaDetalleActual = "SIN_PREFERENCIA";
+
+  const respuestas = respuestasGlobales.filter(r =>
+    r.preferencia_1 === OPCION_SIN_PREFERENCIA
+  );
+
+  const resumen = {};
+
+  respuestas.forEach(r => {
+    const establecimiento = r.establecimiento || "SIN ESTABLECIMIENTO";
+
+    if (!resumen[establecimiento]) {
+      resumen[establecimiento] = {
+        total: 0,
+        estudiantes: []
+      };
+    }
+
+    resumen[establecimiento].total++;
+    resumen[establecimiento].estudiantes.push(r);
+  });
+
+  document.getElementById("panel").classList.add("oculto");
+  document.getElementById("detalleEstablecimiento").classList.remove("oculto");
+
+  document.getElementById("tituloDetalle").innerHTML = `
+    <div class="card-header-establecimiento">
+      <span>ESTUDIANTES SIN PREFERENCIA DEFINIDA</span>
+    </div>
+  `;
+
+  document.getElementById("detalleTotal").textContent = respuestas.length;
+  document.getElementById("detalleCH").textContent = "-";
+  document.getElementById("detalleTP").textContent = "-";
+
+  const contenedor = document.getElementById("cardsEstudiantes");
+  contenedor.innerHTML = "";
+
+  const establecimientosOrdenados = Object.keys(resumen).sort((a, b) => {
+    return resumen[b].total - resumen[a].total;
+  });
+
+  if (establecimientosOrdenados.length === 0) {
+    contenedor.innerHTML = `
+      <div class="estudiante-card">
+        <p>No existen estudiantes con "Sin preferencia definida".</p>
+      </div>
+    `;
+    return;
+  }
+
+  establecimientosOrdenados.forEach((est, index) => {
+    const bloque = document.createElement("div");
+    bloque.className = "estudiante-card bloque-sin-preferencia";
+
+    const idDetalle = `detalle-sin-preferencia-${index}`;
+
+    const estudiantesHtml = resumen[est].estudiantes.map(r => {
+      const fecha = r.fecha
+        ? new Date(r.fecha).toLocaleDateString("es-CL")
+        : "-";
+
+      return `
+        <div class="estudiante-sin-preferencia-item">
+          <strong>${r.nombre}</strong>
+          <span>RUT: ${r.rut}</span>
+          <span>Tendencia: ${r.tendencia}</span>
+          <span>CH: ${r.porcentaje_ch}% | TP: ${r.porcentaje_tp}%</span>
+          <span>Fecha: ${fecha}</span>
+        </div>
+      `;
+    }).join("");
+
+    bloque.innerHTML = `
+      <div
+        class="sin-preferencia-encabezado"
+        onclick="toggleDetalleSinPreferencia('${idDetalle}', this)"
+      >
+        <div class="card-header-establecimiento">
+          ${crearImagenInsignia(est, "insignia-card-grande")}
+          <div>
+            <h3>${est}</h3>
+
+            <div class="resumen-sin-preferencia">
+              <div class="dato-resumen">
+                <span>Total respuestas</span>
+                <strong>${obtenerTotalEstablecimiento(est)}</strong>
+              </div>
+
+              <div class="dato-resumen alerta">
+                <span>Sin preferencia definida</span>
+                <strong>${resumen[est].total}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <span class="flecha-acordeon">▼</span>
+      </div>
+
+      <div id="${idDetalle}" class="lista-estudiantes-sin-preferencia oculto">
+        ${estudiantesHtml}
+      </div>
+    `;
+
+    contenedor.appendChild(bloque);
+  });
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+function toggleDetalleSinPreferencia(idDetalle, encabezado) {
+  const detalle = document.getElementById(idDetalle);
+
+  if (!detalle) return;
+
+  detalle.classList.toggle("oculto");
+
+  const flecha = encabezado.querySelector(".flecha-acordeon");
+
+  if (flecha) {
+    flecha.textContent = detalle.classList.contains("oculto") ? "▼" : "▲";
+  }
+}
+
+function crearAnalisisConcordancia(data) {
+  const tbody = document.getElementById("tablaConcordancia");
+
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  let totalEvaluables = 0;
+  let totalConcordantes = 0;
+  let totalNoConcordantes = 0;
+  let totalSinPreferencia = 0;
+
+  const resumenPorLiceo = {};
+
+  data.forEach(r => {
+    const primeraPreferencia = r.preferencia_1;
+
+    if (!primeraPreferencia || primeraPreferencia === OPCION_SIN_PREFERENCIA) {
+      totalSinPreferencia++;
+      return;
+    }
+
+    const resultado = esConcordante(r.tendencia, primeraPreferencia);
+
+    if (resultado === null) return;
+
+    totalEvaluables++;
+
+    if (!resumenPorLiceo[primeraPreferencia]) {
+      resumenPorLiceo[primeraPreferencia] = {
+        total: 0,
+        concordantes: 0,
+        noConcordantes: 0
+      };
+    }
+
+    resumenPorLiceo[primeraPreferencia].total++;
+
+    if (resultado) {
+      totalConcordantes++;
+      resumenPorLiceo[primeraPreferencia].concordantes++;
+    } else {
+      totalNoConcordantes++;
+      resumenPorLiceo[primeraPreferencia].noConcordantes++;
+    }
+  });
+
+  const porcentajeGeneral = totalEvaluables > 0
+    ? Math.round((totalConcordantes / totalEvaluables) * 100)
+    : 0;
+
+  document.getElementById("concordanciaGeneral").textContent = porcentajeGeneral + "%";
+  document.getElementById("totalConcordantes").textContent = totalConcordantes;
+  document.getElementById("totalNoConcordantes").textContent = totalNoConcordantes;
+  document.getElementById("totalSinPreferencia").textContent = totalSinPreferencia;
+
+  const liceos = Object.keys(resumenPorLiceo).sort((a, b) => {
+    return resumenPorLiceo[b].total - resumenPorLiceo[a].total;
+  });
+
+  if (liceos.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6">Aún no existen datos suficientes para calcular concordancia.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  liceos.forEach(liceo => {
+    const r = resumenPorLiceo[liceo];
+    const tipoOferta = tipoOfertaLiceos[liceo] || "SIN CLASIFICAR";
+
+    const porcentaje = r.total > 0
+      ? Math.round((r.concordantes / r.total) * 100)
+      : 0;
+
+    const claseFila = porcentaje >= 70
+      ? "fila-concordancia-alta"
+      : porcentaje >= 50
+        ? "fila-concordancia-media"
+        : "fila-concordancia-baja";
+
+    tbody.innerHTML += `
+      <tr class="${claseFila}">
+        <td>
+          <div class="card-header-establecimiento">
+            ${crearImagenInsignia(liceo, "insignia-card")}
+            <strong>${liceo}</strong>
+          </div>
+        </td>
+        <td>${obtenerEtiquetaOferta(tipoOferta)}</td>
+        <td>${r.total}</td>
+        <td>${r.concordantes}</td>
+        <td>${r.noConcordantes}</td>
+        <td><strong>${porcentaje}%</strong></td>
+      </tr>
+    `;
+  });
 }
 
 function obtenerResumenPreferencias(data) {
@@ -523,6 +816,8 @@ async function guardarTrasladoRespuesta(id) {
 
   if (vistaDetalleActual === "OTROS") {
     verOtrosEstablecimientos();
+  } else if (vistaDetalleActual === "SIN_PREFERENCIA") {
+    verSinPreferenciaPorEstablecimiento();
   } else if (vistaDetalleActual) {
     verDetalleEstablecimiento(vistaDetalleActual);
   }
