@@ -385,6 +385,7 @@ function verSinPreferenciaPorEstablecimiento() {
 
   document.getElementById("panel").classList.add("oculto");
   document.getElementById("detalleEstablecimiento").classList.remove("oculto");
+  document.getElementById("btnDescargarDetalle").classList.add("oculto");
 
   document.getElementById("tituloDetalle").innerHTML = `
     <div class="card-header-establecimiento">
@@ -844,6 +845,7 @@ function verDetalleEstablecimiento(establecimiento) {
 
   document.getElementById("panel").classList.add("oculto");
   document.getElementById("detalleEstablecimiento").classList.remove("oculto");
+  document.getElementById("btnDescargarDetalle").classList.remove("oculto");
 
   document.getElementById("tituloDetalle").innerHTML = `
     <div class="card-header-establecimiento">
@@ -895,6 +897,7 @@ function verOtrosEstablecimientos() {
 
   document.getElementById("panel").classList.add("oculto");
   document.getElementById("detalleEstablecimiento").classList.remove("oculto");
+  document.getElementById("btnDescargarDetalle").classList.add("oculto");
 
   document.getElementById("tituloDetalle").innerHTML = `
     <div class="card-header-establecimiento">
@@ -986,7 +989,165 @@ function escribirTextoLargo(doc, texto, x, y, ancho, salto = 6) {
   doc.text(lineas, x, y);
   return y + (lineas.length * salto);
 }
+function descargarPDFDetalleEstablecimiento() {
+  if (!vistaDetalleActual || vistaDetalleActual === "OTROS" || vistaDetalleActual === "SIN_PREFERENCIA") {
+    alert("Debes ingresar al detalle de un establecimiento DAEM para descargar este reporte.");
+    return;
+  }
 
+  const establecimiento = vistaDetalleActual;
+
+  const respuestas = respuestasGlobales
+    .filter(r =>
+      normalizarTexto(r.establecimiento) === normalizarTexto(establecimiento) &&
+      !esOtroEstablecimiento(r)
+    )
+    .sort((a, b) => {
+      const aSinPreferencia = a.preferencia_1 === OPCION_SIN_PREFERENCIA ? 1 : 0;
+      const bSinPreferencia = b.preferencia_1 === OPCION_SIN_PREFERENCIA ? 1 : 0;
+
+      if (aSinPreferencia !== bSinPreferencia) {
+        return aSinPreferencia - bSinPreferencia;
+      }
+
+      return String(a.nombre || "").localeCompare(String(b.nombre || ""));
+    });
+
+  if (respuestas.length === 0) {
+    alert("Este establecimiento no tiene respuestas para descargar.");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const fecha = new Date().toLocaleDateString("es-CL");
+
+  const total = respuestas.length;
+  const totalConPreferencia = respuestas.filter(r =>
+    r.preferencia_1 && r.preferencia_1 !== OPCION_SIN_PREFERENCIA
+  ).length;
+
+  const totalSinPreferencia = respuestas.filter(r =>
+    r.preferencia_1 === OPCION_SIN_PREFERENCIA
+  ).length;
+
+  const promedioCH = Math.round(
+    respuestas.reduce((sum, r) => sum + r.porcentaje_ch, 0) / total
+  );
+
+  const promedioTP = Math.round(
+    respuestas.reduce((sum, r) => sum + r.porcentaje_tp, 0) / total
+  );
+
+  let y = 20;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("Reporte por establecimiento", 20, y);
+
+  y += 8;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text(`DAEM Talca - Fecha de descarga: ${fecha}`, 20, y);
+
+  y += 10;
+
+  doc.line(20, y, 190, y);
+
+  y += 12;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text(establecimiento, 20, y);
+
+  y += 10;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Total respuestas: ${total}`, 20, y);
+  y += 6;
+  doc.text(`Con preferencia definida: ${totalConPreferencia}`, 20, y);
+  y += 6;
+  doc.text(`Sin preferencia definida: ${totalSinPreferencia}`, 20, y);
+  y += 6;
+  doc.text(`Promedio Científico Humanista: ${promedioCH}%`, 20, y);
+  y += 6;
+  doc.text(`Promedio Técnico Profesional: ${promedioTP}%`, 20, y);
+
+  y += 12;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Detalle de estudiantes", 20, y);
+
+  y += 8;
+
+  respuestas.forEach((r, index) => {
+    y = agregarPaginaSiNecesita(doc, y, 255);
+
+    const sinPreferencia = r.preferencia_1 === OPCION_SIN_PREFERENCIA;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+
+    const titulo = `${index + 1}. ${r.nombre || "-"} | RUT: ${r.rut || "-"}`;
+    y = escribirTextoLargo(doc, titulo, 20, y, 170, 5);
+
+    y += 2;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+
+    y = escribirTextoLargo(
+      doc,
+      `Tendencia: ${r.tendencia || "-"} | CH: ${r.porcentaje_ch}% | TP: ${r.porcentaje_tp}%`,
+      24,
+      y,
+      160,
+      5
+    );
+
+    if (sinPreferencia) {
+      doc.setFont("helvetica", "bold");
+      y = escribirTextoLargo(
+        doc,
+        "Preferencia: SIN PREFERENCIA DEFINIDA",
+        24,
+        y,
+        160,
+        5
+      );
+      doc.setFont("helvetica", "normal");
+    } else {
+      y = escribirTextoLargo(
+        doc,
+        `Preferencias: 1) ${r.preferencia_1 || "-"} | 2) ${r.preferencia_2 || "-"} | 3) ${r.preferencia_3 || "-"}`,
+        24,
+        y,
+        160,
+        5
+      );
+    }
+
+    y += 4;
+
+    doc.setDrawColor(220);
+    doc.line(20, y, 190, y);
+    y += 7;
+  });
+
+  const nombreArchivo = `reporte-${establecimiento
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ñ/g, "n")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")}.pdf`;
+
+  doc.save(nombreArchivo);
+}
 function descargarPDFComunal() {
   if (!respuestasGlobales || respuestasGlobales.length === 0) {
     alert("Aún no hay respuestas para descargar.");
